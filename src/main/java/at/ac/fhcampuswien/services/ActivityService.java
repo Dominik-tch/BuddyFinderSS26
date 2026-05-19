@@ -21,10 +21,14 @@ public class ActivityService {
         }
         return allActivities;
     }
-    public void addActivity(Activity activity) {
-        if (isInvalid(activity) || exists(activity)) {
-            return;
+    public List<Activity> getAllOwnedActivities(String owner) {
+        List<Activity> allActivities = activities.findAllOwned(owner);
+        if (allActivities.isEmpty()) {
+            throw new ActivityNotFoundException("No owned activities in the database");
         }
+        return allActivities;
+    }
+    public void addActivity(Activity activity) {
         activities.add(activity);
     }
     public void deleteActivity(UUID id) {
@@ -34,7 +38,6 @@ public class ActivityService {
     public boolean isInvalid(Activity activity) {
         return activity == null
                 || activity.getTitle() == null
-                || activity.getOwner() == null
                 || activity.getPrice() < 0
                 || activity.getLocation() == null
                 || activity.getUserLimit() <= 0;

@@ -51,6 +51,10 @@ public class Activity {
         return userLimit;
     }
 
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;

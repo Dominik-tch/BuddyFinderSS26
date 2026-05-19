@@ -6,8 +6,10 @@ import at.ac.fhcampuswien.exceptions.DatabaseException;
 import at.ac.fhcampuswien.models.Activity;
 import at.ac.fhcampuswien.repositories.ActivityRepository;
 import at.ac.fhcampuswien.repositories.SessionRepository;
+import at.ac.fhcampuswien.repositories.UserRepository;
 import at.ac.fhcampuswien.services.ActivityService;
 import at.ac.fhcampuswien.services.SessionService;
+import at.ac.fhcampuswien.services.UserService;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
@@ -22,6 +24,7 @@ import java.util.UUID;
 public class ActivityController implements HttpHandler {
     private final ActivityService activityService = new ActivityService(new ActivityRepository());
     private final SessionService sessionService = new SessionService(new SessionRepository());
+    private final UserService userService = new UserService(new UserRepository());
 
     private final String BASE = "/api/activities/";
 
@@ -44,7 +47,7 @@ public class ActivityController implements HttpHandler {
             switch (routingPath) {
                 case BASE -> handleBaseRequest(method, exchange);
                 case BASE + "getAll" -> handleGetAllRequest(method, exchange);
-                //case BASE + "getAllOwned" -> handleGetAllOwnedRequest(method, exchange);
+                case BASE + "getAllOwned" -> handleGetAllOwnedRequest(method, exchange);
                 case BASE + "add" -> handleAddRequest(method, exchange);
                 case BASE + "delete" -> handleDeleteRequest(method, exchange);
                 //case BASE + "update" -> handleUpdateRequest(method, exchange);
@@ -86,6 +89,22 @@ public class ActivityController implements HttpHandler {
         }
     }
 
+    private void handleGetAllOwnedRequest(String method, HttpExchange exchange) throws IOException {
+        // Handle GET for /api/activities/getAllOwned
+        switch (method) {
+            case "GET" -> {
+                String userId = getAuthenticatedUserId(exchange);
+                String userName = userService.getUserById(UUID.fromString(userId)).getUserName();
+                String response = activityToJson(activityService.getAllOwnedActivities(userName));
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+            default -> {
+                String response = "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
     private void handleGetAllRequest(String method, HttpExchange exchange) throws IOException {
         // Handle GET for /api/activities/getAll
         switch (method) {
@@ -109,6 +128,8 @@ public class ActivityController implements HttpHandler {
                 String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
+                //add the current userName as owner by the userID
+                activity.setOwner(userService.getUserById(UUID.fromString(userId)).getUserName());
                 //Check if activity already exists
                 if (activityService.exists(activity)) {
                     throw new IllegalStateException("Activity already exists");

@@ -42,6 +42,36 @@ public class ActivityRepository {
         return activities;
     }
 
+    public List<Activity> findAllOwned(String owner) {
+        List<Activity> activities = new ArrayList<>();
+
+        String sql = "SELECT * FROM activities WHERE owner = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, owner);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Activity activity = new Activity(
+                            rs.getString("title"),
+                            rs.getString("owner"),
+                            rs.getInt("price"),
+                            rs.getString("location"),
+                            rs.getInt("user_limit"),
+                            UUID.fromString(rs.getString("id"))
+                    );
+                    activities.add(activity);
+                }
+            }
+        }
+        catch (SQLException e) {
+            throw new DatabaseException("Error getting activities from database", e);
+        }
+
+        return activities;
+    }
+
     public void add(Activity activity) {
         String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit) VALUES (?, ?, ?, ?, ?, ?)";
 

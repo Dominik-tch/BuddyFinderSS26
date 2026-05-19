@@ -19,8 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 
 public class UserController implements HttpHandler {
-
-    // Beide Services initialisieren (User für Daten, Session für Token)
     private final UserService userService = new UserService(new UserRepository());
     private final SessionService sessionService = new SessionService(new SessionRepository());
 
@@ -95,10 +93,10 @@ public class UserController implements HttpHandler {
         switch (method) {
             case "POST" -> {
                 InputStream is = exchange.getRequestBody();
-                User user = getUserFromHttpInputStream(is);
+                User loginAttempt = getUserFromHttpInputStream(is);
 
                 // Try to authtificate user
-                User authenticatedUser = userService.authenticateUser(user.getUserName(), user.getPassword());
+                User authenticatedUser = userService.authenticateUser(loginAttempt.getUserName(), loginAttempt.getPassword());
 
                 if (authenticatedUser != null) {
                     //login succesfull -> create session
