@@ -1,0 +1,1 @@
+Buddy-Finder is a web app that helps people find partners for activities like sports or hobbies. Users create profiles, post or browse activity offers, and connect with others. It provides an easy, safe way to turn plans into shared experiences and meet new people.
