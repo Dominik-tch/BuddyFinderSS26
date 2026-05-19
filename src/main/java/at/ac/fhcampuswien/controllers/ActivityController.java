@@ -5,7 +5,9 @@ import at.ac.fhcampuswien.exceptions.ActivityNotFoundException;
 import at.ac.fhcampuswien.exceptions.DatabaseException;
 import at.ac.fhcampuswien.models.Activity;
 import at.ac.fhcampuswien.repositories.ActivityRepository;
+import at.ac.fhcampuswien.repositories.SessionRepository;
 import at.ac.fhcampuswien.services.ActivityService;
+import at.ac.fhcampuswien.services.SessionService;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
@@ -19,9 +21,9 @@ import java.util.UUID;
 
 public class ActivityController implements HttpHandler {
     private final ActivityService activityService = new ActivityService(new ActivityRepository());
+    private final SessionService sessionService = new SessionService(new SessionRepository());
 
     private final String BASE = "/api/activities/";
-
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
@@ -55,6 +57,8 @@ public class ActivityController implements HttpHandler {
             }
         } catch (ActivityNotFoundException e) {
             ApiUtils.sendResponse(exchange, 404, "{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (SecurityException e) {
+            ApiUtils.sendResponse(exchange, 401, "{\"error\": \"" + e.getMessage() + "\"}");
         } catch (IllegalArgumentException e) {
             ApiUtils.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
         } catch (JsonSyntaxException e) {
@@ -100,6 +104,8 @@ public class ActivityController implements HttpHandler {
         // Handle POST for /api/activities/add
         switch (method) {
             case "POST" -> {
+                String userId = getAuthenticatedUserId(exchange);
+
                 String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
@@ -122,6 +128,8 @@ public class ActivityController implements HttpHandler {
         // Handle DELETE for /api/activities/delete/{String ID}
         switch (method) {
             case "DELETE" -> {
+                String userId = getAuthenticatedUserId(exchange);
+
                 String path = exchange.getRequestURI().getPath();
                 String[] segments = path.split("/");
 
@@ -157,10 +165,21 @@ public class ActivityController implements HttpHandler {
         Gson gson = new Gson();
         return gson.fromJson(body, Activity.class);
     }
-
     private String activityToJson(List<Activity> activityList) {
-        //Builds a Json out of the given Activity list to be able to send it via the API
         Gson gson = new Gson();
         return gson.toJson(activityList);
+    }
+    private String getAuthenticatedUserId(HttpExchange exchange) {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            String userId = sessionService.validateTokenAndGetUserId(token);
+
+            if (userId != null) {
+                return userId;
+            }
+        }
+        throw new SecurityException("Unauthorized. Please log in.");
     }
 }
