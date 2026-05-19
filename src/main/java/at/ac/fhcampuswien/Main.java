@@ -1,5 +1,6 @@
 package at.ac.fhcampuswien;
 
+import at.ac.fhcampuswien.controllers.ActivityController;
 import at.ac.fhcampuswien.controllers.HelloController;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpHandler;
@@ -16,6 +17,10 @@ public class Main {
 
         // Register controllers and their handlers - REST endpoints
         registerController(server, "/api/hello", new HelloController());
+        registerController(server, "/api/activities", new ActivityController());
+
+        //Initialize Database
+        DatabaseUtil.initializeDatabase();
 
         // Start the server
         server.setExecutor(null);
