@@ -16,20 +16,39 @@ public class DatabaseUtil {
     }
     public static void initializeDatabase() {
         String createActivitiesTable = """
-        CREATE TABLE IF NOT EXISTS activities (
-            id UUID PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            owner VARCHAR(255) NOT NULL,
-            price INT NOT NULL,
-            location VARCHAR(255) NOT NULL,
-            user_limit INT NOT NULL
-        );
+            CREATE TABLE IF NOT EXISTS activities (
+                id UUID PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                owner VARCHAR(255) NOT NULL,
+                price INT NOT NULL,
+                location VARCHAR(255) NOT NULL,
+                user_limit INT NOT NULL
+            );
         """;
+        String createUserTable = """
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                first_name VARCHAR(50),
+                last_name VARCHAR(50)
+            );
+            """;
+        String createSessionTable = """
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            """;
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
 
             statement.execute(createActivitiesTable);
+            statement.execute(createUserTable);
+            statement.execute(createSessionTable);
             System.out.println("Tables initialized successfully.");
 
         } catch (SQLException e) {
