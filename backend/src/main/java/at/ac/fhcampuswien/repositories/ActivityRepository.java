@@ -30,6 +30,7 @@ public class ActivityRepository {
                         rs.getInt("price"),
                         rs.getString("location"),
                         rs.getInt("user_limit"),
+                        rs.getString("description"),
                         UUID.fromString(rs.getString("id"))
                 );
                 activities.add(activity);
@@ -59,6 +60,7 @@ public class ActivityRepository {
                             rs.getInt("price"),
                             rs.getString("location"),
                             rs.getInt("user_limit"),
+                            rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
                     activities.add(activity);
@@ -73,7 +75,7 @@ public class ActivityRepository {
     }
 
     public void add(Activity activity) {
-        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -84,6 +86,7 @@ public class ActivityRepository {
             pstmt.setInt(4, activity.getPrice());
             pstmt.setString(5, activity.getLocation());
             pstmt.setInt(6, activity.getUserLimit());
+            pstmt.setString(7, activity.getDescription());
 
             pstmt.executeUpdate();
 

@@ -3,33 +3,36 @@ package at.ac.fhcampuswien.models;
 import java.util.UUID;
 
 public class Activity {
-    private UUID id;
+    private final UUID id;
     private String title;
     private String owner;
     private int price;
     private String location;
     private int userLimit;
+    private String description;
 
     public Activity() {
         this.id = UUID.randomUUID();
     }
 
-    public Activity(String title, String owner, int price, String location, int userLimit) {
+    public Activity(String title, String owner, int price, String location, int userLimit, String description) {
         this.id = UUID.randomUUID();
         this.title = title;
         this.owner = owner;
         this.price = price;
         this.location = location;
         this.userLimit = userLimit;
+        this.description = description;
     }
 
-    public Activity(String title, String owner, int price, String location, int userLimit, UUID id) {
+    public Activity(String title, String owner, int price, String location, int userLimit, String description, UUID id) {
         this.id = id;
         this.title = title;
         this.owner = owner;
         this.price = price;
         this.location = location;
         this.userLimit = userLimit;
+        this.description = description;
     }
 
     public UUID getId() {
@@ -50,6 +53,7 @@ public class Activity {
     public int getUserLimit() {
         return userLimit;
     }
+    public String getDescription() {return description;}
 
     public void setOwner(String owner) {
         this.owner = owner;
@@ -66,11 +70,12 @@ public class Activity {
                 userLimit == other.userLimit &&
                 java.util.Objects.equals(title, other.title) &&
                 java.util.Objects.equals(owner, other.owner) &&
-                java.util.Objects.equals(location, other.location);
+                java.util.Objects.equals(location, other.location) &&
+                java.util.Objects.equals(description, other.description);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(title, owner, price, location, userLimit);
+        return java.util.Objects.hash(title, owner, price, location, userLimit, description);
     }
 }

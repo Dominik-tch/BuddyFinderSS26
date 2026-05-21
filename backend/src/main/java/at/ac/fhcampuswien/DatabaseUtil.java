@@ -22,7 +22,8 @@ public class DatabaseUtil {
                 owner VARCHAR(255) NOT NULL,
                 price INT NOT NULL,
                 location VARCHAR(255) NOT NULL,
-                user_limit INT NOT NULL
+                user_limit INT NOT NULL,
+                description VARCHAR(255)
             );
         """;
         String createUserTable = """
