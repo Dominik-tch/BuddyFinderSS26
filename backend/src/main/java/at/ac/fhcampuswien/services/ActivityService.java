@@ -28,6 +28,24 @@ public class ActivityService {
         }
         return allActivities;
     }
+    public List<Activity> getAllJoinedActivities(String userId) {
+        List<Activity> allActivities = activities.findAllJoined(userId);
+        if (allActivities.isEmpty()) {
+            throw new ActivityNotFoundException("No joined activities in the database");
+        }
+        return allActivities;
+    }
+
+    public void joinActivity(UUID userId, UUID activityId) {
+         int currentParticipants = activities.countParticipants(activityId);
+         Activity activity = activities.getActivityById(activityId);
+         if (currentParticipants >= activity.getUserLimit()) {
+              throw new IllegalStateException("Activity is already full!");
+         }
+
+        activities.joinActivity(userId, activityId);
+    }
+
     public void addActivity(Activity activity) {
         activities.add(activity);
     }

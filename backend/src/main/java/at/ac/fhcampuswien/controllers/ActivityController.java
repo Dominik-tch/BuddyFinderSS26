@@ -41,6 +41,8 @@ public class ActivityController implements HttpHandler {
             String routingPath = path;
             if (path.startsWith(BASE + "delete/")) {
                 routingPath = BASE + "delete";
+            } else if (path.startsWith(BASE + "join/")) {
+                routingPath = BASE + "join";
             }
 
             // Route based on the NORMALIZED path
@@ -48,10 +50,10 @@ public class ActivityController implements HttpHandler {
                 case BASE -> handleBaseRequest(method, exchange);
                 case BASE + "getAll" -> handleGetAllRequest(method, exchange);
                 case BASE + "getAllOwned" -> handleGetAllOwnedRequest(method, exchange);
+                case BASE + "getAllJoined" -> handleGetAllJoinedRequest(method, exchange);
                 case BASE + "add" -> handleAddRequest(method, exchange);
                 case BASE + "delete" -> handleDeleteRequest(method, exchange);
-                //case BASE + "update" -> handleUpdateRequest(method, exchange);
-                //case BASE + "search" -> handleSearchRequest(method, exchange);
+                case BASE + "join" -> handljoinRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -70,6 +72,7 @@ public class ActivityController implements HttpHandler {
             ApiUtils.sendResponse(exchange, 409, "{\"error\": \"" + e.getMessage() + "\"}");
         } catch (DatabaseException e) {
             ApiUtils.sendResponse(exchange, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+            e.getCause().printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
             ApiUtils.sendResponse(exchange, 500, "{\"error\": \"An unexpected error occurred.\"}");
@@ -96,6 +99,21 @@ public class ActivityController implements HttpHandler {
                 String userId = getAuthenticatedUserId(exchange);
                 String userName = userService.getUserById(UUID.fromString(userId)).getUserName();
                 String response = activityToJson(activityService.getAllOwnedActivities(userName));
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+            default -> {
+                String response = "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
+    private void handleGetAllJoinedRequest(String method, HttpExchange exchange) throws IOException {
+        // Handle GET for /api/activities/getAllJoined
+        switch (method) {
+            case "GET" -> {
+                String userId = getAuthenticatedUserId(exchange);
+                String response = activityToJson(activityService.getAllJoinedActivities(userId));
                 ApiUtils.sendResponse(exchange, 200, response);
             }
             default -> {
@@ -149,11 +167,9 @@ public class ActivityController implements HttpHandler {
         // Handle DELETE for /api/activities/delete/{String ID}
         switch (method) {
             case "DELETE" -> {
-                String userId = getAuthenticatedUserId(exchange);
-
+                getAuthenticatedUserId(exchange);
                 String path = exchange.getRequestURI().getPath();
                 String[] segments = path.split("/");
-
                 String idString = segments[segments.length - 1];
                 UUID id = UUID.fromString(idString);
                 activityService.deleteActivity(id);
@@ -167,6 +183,28 @@ public class ActivityController implements HttpHandler {
             }
         }
     }
+
+    private void handljoinRequest(String method, HttpExchange exchange) throws IOException {
+        // Handle POST for /api/activities/join/{String ID}
+        switch (method) {
+            case "POST" -> {
+                String userId = getAuthenticatedUserId(exchange);
+                String path = exchange.getRequestURI().getPath();
+                String[] segments = path.split("/");
+                String idString = segments[segments.length - 1];
+                UUID activityId = UUID.fromString(idString);
+                activityService.joinActivity(UUID.fromString(userId), activityId);
+                String response = "{ \"message\": \"Joined activity successfully\" }";
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+
+            default -> {
+                String response = "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
     private Activity getActivityFromHttpInputStream(InputStream is) throws IOException {
         String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
         //Check that the body is not empty

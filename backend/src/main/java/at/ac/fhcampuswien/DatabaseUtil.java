@@ -43,6 +43,15 @@ public class DatabaseUtil {
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             );
             """;
+        String createActivityParticipants = """
+            CREATE TABLE IF NOT EXISTS activity_participants (
+                user_id UUID NOT NULL,
+                activity_id UUID NOT NULL,
+                PRIMARY KEY (user_id, activity_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE
+            );
+            """;
 
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
@@ -50,6 +59,7 @@ public class DatabaseUtil {
             statement.execute(createActivitiesTable);
             statement.execute(createUserTable);
             statement.execute(createSessionTable);
+            statement.execute(createActivityParticipants);
             System.out.println("Tables initialized successfully.");
 
         } catch (SQLException e) {
