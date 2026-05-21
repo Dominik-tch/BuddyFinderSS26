@@ -1,0 +1,273 @@
+/* --- CSS Variablen für das grüne Theme --- */
+:root {
+    --brand-light: #dcfce7;
+    --brand: #16a34a;
+    --brand-dark: #15803d;
+    --brand-hover: #166534;
+    
+    --bg-color: #f9fafb;
+    --text-color: #1f2937;
+    --text-light: #6b7280;
+    
+    --white: #ffffff;
+    --danger-light: #fee2e2;
+    --danger: #b91c1c;
+    --danger-hover: #991b1b;
+    
+    --border-color: #e5e7eb;
+    --border-radius: 8px;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Reset & Basis --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Typografie --- */
+h2, h3, h4 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+.section-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* --- Layout --- */
+.container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    width: 100%;
+    flex-grow: 1;
+}
+
+/* --- Navbar --- */
+.navbar {
+    background-color: var(--brand);
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+}
+
+.nav-container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+/* --- Alert Box --- */
+.alert {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    color: var(--white);
+    box-shadow: var(--shadow-md);
+}
+.alert-success { background-color: var(--brand); }
+.alert-error { background-color: var(--danger); }
+
+/* --- Karten (Cards) --- */
+.card {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+.border-brand { border-left: 4px solid var(--brand); }
+
+/* --- Auth Section --- */
+.auth-section {
+    max-width: 400px;
+    margin: 2rem auto;
+    border-top: 4px solid var(--brand);
+}
+
+.auth-section h2 { text-align: center; }
+
+.auth-toggle {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.auth-toggle a {
+    color: var(--brand);
+    text-decoration: none;
+}
+.auth-toggle a:hover { text-decoration: underline; }
+
+/* --- Formulare --- */
+.form-group {
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-light);
+}
+
+#add-activity-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.w-full { width: 100%; }
+
+.btn-primary {
+    background-color: var(--brand);
+    color: var(--white);
+}
+.btn-primary:hover { background-color: var(--brand-dark); }
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: var(--text-color);
+}
+.btn-secondary:hover { background-color: #e5e7eb; }
+
+.btn-danger {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+.btn-danger:hover { background-color: #fca5a5; }
+
+/* --- Tabs (Dashboard Navigation) --- */
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-light);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn:hover { color: var(--brand); }
+
+.tab-btn.active {
+    color: var(--brand);
+    border-bottom-color: var(--brand);
+}
+
+/* --- Grid & Activity Cards --- */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.activity-card {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s;
+}
+
+.activity-card:hover { box-shadow: var(--shadow-md); }
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.activity-header h4 { margin: 0; }
+
+.badge {
+    background-color: var(--brand-light);
+    color: var(--brand-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.activity-desc {
+    color: var(--text-light);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.activity-actions {
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+.activity-actions .btn { flex-grow: 1; }

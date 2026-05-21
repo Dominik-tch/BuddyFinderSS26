@@ -1,22 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Movies!</title>
-    <link rel="stylesheet" href="index.css" />
-    <script type="module" src="index.js"></script>
-  </head>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-  <body>
-    <header>
-      <h1>The best Movies!</h1>
-    </header>
-    <nav>
-      <h1>Genres</h1>
-      <ul></ul>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">🌱 ActivityBase</h1>
+            <div id="nav-auth-buttons">
+                <button onclick="logout()" id="btn-logout" class="btn btn-danger hidden">Abmelden</button>
+            </div>
+        </div>
     </nav>
-    <main></main>
-    <footer>© 2026 TechPro AG - Implemented by Dominik Tasch, Andre Berari, Ilirian Pordrimquaku, Darius Mitaichie</footer>
-  </body>
+
+    <!-- Main Content -->
+    <main class="container">
+        
+        <!-- Fehlermeldungen / Benachrichtigungen -->
+        <div id="alert-box" class="alert hidden"></div>
+
+        <!-- AUTHENTIFIZIERUNG (Login / Registrierung) -->
+        <section id="view-auth" class="auth-section card">
+            <h2 id="auth-title">Anmelden</h2>
+            
+            <form id="auth-form" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label for="username">Benutzername</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Passwort</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <!-- Zusätzliche Felder für Registrierung (Standardmäßig versteckt) -->
+                <div id="register-fields" class="hidden">
+                    <div class="form-group">
+                        <label for="email">E-Mail Adresse</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="firstName">Vorname</label>
+                        <input type="text" id="firstName">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Nachname</label>
+                        <input type="text" id="lastName">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full" style="margin-top: 1rem;">
+                    <span id="auth-btn-text">Login</span>
+                </button>
+            </form>
+
+            <div class="auth-toggle">
+                <a href="#" onclick="toggleAuthMode()" id="auth-toggle-link">Noch kein Konto? Hier registrieren.</a>
+            </div>
+        </section>
+
+        <!-- DASHBOARD (Aktivitäten) -->
+        <section id="view-dashboard" class="hidden">
+            
+            <!-- Dashboard Navigation -->
+            <div class="tabs">
+                <button onclick="loadActivities('getAll')" id="tab-getAll" class="tab-btn active">Alle Aktivitäten</button>
+                <button onclick="loadActivities('getAllOwned')" id="tab-getAllOwned" class="tab-btn">Meine Erstellten</button>
+                <button onclick="loadActivities('getAllJoined')" id="tab-getAllJoined" class="tab-btn">Meine Teilnahmen</button>
+            </div>
+
+            <!-- Aktivität hinzufügen -->
+            <div class="add-activity card border-brand">
+                <h3>Neue Aktivität erstellen</h3>
+                <form id="add-activity-form" onsubmit="handleAddActivity(event)">
+                    <div class="form-group">
+                        <label for="act-title">Titel</label>
+                        <input type="text" id="act-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="act-desc">Beschreibung</label>
+                        <input type="text" id="act-desc" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="act-location">Ort</label>
+                        <input type="text" id="act-location" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="act-price">Preis (€)</label>
+                        <input type="number" id="act-price" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="act-limit">Teilnehmer-Limit</label>
+                        <input type="number" id="act-limit" min="1" required>
+                    </div>
+                    <div style="width: 100%; text-align: right; margin-top: 10px;">
+                        <button type="submit" class="btn btn-primary">Aktivität erstellen</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Liste der Aktivitäten -->
+            <h3 id="list-title" class="section-title">Aktivitäten</h3>
+            <div id="activities-container" class="grid-container">
+                <!-- Aktivitäten werden hier per JS eingefügt -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
 </html>
