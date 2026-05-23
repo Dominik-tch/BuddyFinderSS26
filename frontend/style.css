@@ -289,3 +289,19 @@ h2, h3, h4 {
     gap: 10px;
     flex-wrap: wrap;
 }
+
+.participants-list {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.participant-link {
+    color: var(--brand);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.participant-link:hover {
+    text-decoration: underline;
+}

@@ -4,6 +4,7 @@ import at.ac.fhcampuswien.DatabaseUtil;
 import at.ac.fhcampuswien.exceptions.ActivityNotFoundException;
 import at.ac.fhcampuswien.exceptions.DatabaseException;
 import at.ac.fhcampuswien.models.Activity;
+import at.ac.fhcampuswien.models.UserPreview;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -33,6 +34,8 @@ public class ActivityRepository {
                         rs.getString("description"),
                         UUID.fromString(rs.getString("id"))
                 );
+                activity.setParticipants(getParticipants(activity.getId()));
+                activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);
             }
         }
@@ -63,6 +66,8 @@ public class ActivityRepository {
                             rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
+                    activity.setParticipants(getParticipants(activity.getId()));
+                    activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
                 }
             }
@@ -95,6 +100,8 @@ public class ActivityRepository {
                             rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
+                    activity.setParticipants(getParticipants(activity.getId()));
+                    activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
                 }
             }
@@ -286,7 +293,8 @@ public class ActivityRepository {
                         rs.getString("description"),
                         UUID.fromString(rs.getString("id"))
                 );
-
+                activity.setParticipants(getParticipants(activity.getId()));
+                activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);
             }
 
@@ -346,5 +354,35 @@ public class ActivityRepository {
         } catch (SQLException e) {
             throw new DatabaseException("Error checking joined activity", e);
         }
+    }
+
+    public List<UserPreview> getParticipants(UUID activityId) {
+
+        List<UserPreview> participants = new ArrayList<>();
+
+        String sql = """
+            SELECT u.id, u.username
+            FROM users u
+            INNER JOIN activity_participants ap
+            ON u.id = ap.user_id
+            WHERE ap.activity_id = ?
+        """;
+
+        try (
+            Connection conn = DatabaseUtil.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)
+        ) {
+
+            pstmt.setString(1, activityId.toString());
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                UserPreview user = new UserPreview(UUID.fromString(rs.getString("id")), rs.getString("username")
+            );
+                participants.add(user);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Error getting participants", e);
+        }
+        return participants;
     }
 }

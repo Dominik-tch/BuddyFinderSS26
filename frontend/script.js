@@ -187,9 +187,12 @@ function renderActivities(activities) {
                     <span class="badge">Erstellt von: ${act.owner || 'Unbekannt'}</span>
                 </div>
                 <div style="font-size: 0.85rem; color: var(--brand); margin-bottom: 0.5rem; font-weight: bold;">
-                    📍 ${act.location} &nbsp;|&nbsp; 💰 ${act.price}€ &nbsp;|&nbsp; 👥 Limit: ${act.userLimit}
+                    📍 ${act.location} &nbsp;|&nbsp; 💰 ${act.price}€ &nbsp;|&nbsp; 👥 Limit: ${act.currentParticipants}/${act.userLimit} Teilnehmer
                 </div>
                 <p class="activity-desc">${act.description || 'Keine Beschreibung'}</p>
+                <p class="participants-list">Teilnehmer:${act.participants?.map(user => 
+                `<span class="participant-link" onclick="openUser('${user.id}')">${user.userName}</span>`).join(", ") || "Keine"}
+                </p>
             </div>
             <div class="activity-actions">
                 ${currentFilter === 'getAllJoined' ? `<button onclick="leaveActivity('${act.id}')" class="btn btn-danger">Verlassen</button>`
@@ -380,5 +383,11 @@ async function submitEditActivity(event) {
         loadActivities(currentFilter);
     } catch (error) {
         console.error(error);
+    }
+
+    function openUser(userId) {
+        console.log("User öffnen:", userId);
+        // später:
+        // Profil anzeigen
     }
 }

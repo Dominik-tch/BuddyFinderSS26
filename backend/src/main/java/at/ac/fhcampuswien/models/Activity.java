@@ -1,5 +1,6 @@
 package at.ac.fhcampuswien.models;
 
+import java.util.List;
 import java.util.UUID;
 
 public class Activity {
@@ -10,6 +11,8 @@ public class Activity {
     private String location;
     private int userLimit;
     private String description;
+    private int currentParticipants;
+    private List<UserPreview> participants;
 
     public Activity() {
         this.id = UUID.randomUUID();
@@ -57,6 +60,18 @@ public class Activity {
 
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+
+    public int getCurrentParticipants() {
+        return currentParticipants;
+    }
+
+    public void setCurrentParticipants(int currentParticipants) {
+        this.currentParticipants = currentParticipants;
+    }
+
+    public void setParticipants(List<UserPreview> participants) {
+        this.participants = participants;
     }
 
     @Override
