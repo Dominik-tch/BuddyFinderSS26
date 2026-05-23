@@ -104,10 +104,61 @@
                 </form>
             </div>
 
+            <div id="edit-activity-box" class="add-activity card border-brand hidden">
+            <h3>Aktivität bearbeiten</h3>
+            <form id="edit-activity-form" onsubmit="submitEditActivity(event)">
+
+            <input type="hidden" id="edit-id">
+
+            <div class="form-group">
+                <label>Titel</label>
+                <input type="text" id="edit-title" required>
+            </div>
+
+            <div class="form-group">
+                <label>Beschreibung</label>
+                <input type="text" id="edit-description" required>
+            </div>
+
+            <div class="form-group">
+                <label>Ort</label>
+                <input type="text" id="edit-location" required>
+            </div>
+
+            <div class="form-group">
+                <label>Preis</label>
+                <input type="number" id="edit-price" required>
+            </div>
+
+            <div class="form-group">
+                <label>Teilnehmerlimit</label>
+                <input type="number" id="edit-limit" required>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:1rem;">
+                <button type="submit" class="btn btn-primary">Speichern</button>
+                <button type="button" onclick="closeEditBox()" class="btn btn-secondary">Abbrechen</button>
+
+        </div>
+    </form>
+</div>
+
             <!-- Liste der Aktivitäten -->
             <h3 id="list-title" class="section-title">Aktivitäten</h3>
             <div id="activities-container" class="grid-container">
                 <!-- Aktivitäten werden hier per JS eingefügt -->
+            </div>
+
+            <div class="card search-bar" style="margin-bottom: 1.5rem;">
+
+            <input type="text" id="search-title" placeholder="Titel suchen">
+
+            <input type="text" id="search-location" placeholder="Ort">
+
+            <input type="number" id="search-price" placeholder="Max Preis">
+
+            <button onclick="searchActivities()" class="btn btn-primary">Suchen</button>
+
             </div>
 
         </section>

@@ -192,8 +192,9 @@ function renderActivities(activities) {
                 <p class="activity-desc">${act.description || 'Keine Beschreibung'}</p>
             </div>
             <div class="activity-actions">
-                <button onclick="joinActivity('${act.id}')" class="btn btn-secondary">Beitreten</button>
-                ${currentFilter === 'getAllOwned' ? `<button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Löschen</button>` : ''}
+                <button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Beitreten</button>
+                ${currentFilter === 'getAllOwned' ? `<button onclick='openEditBox(${JSON.stringify(act)})' class="btn btn-primary">Bearbeiten</button>
+                                                    <button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Löschen</button>` : ''}
             </div>
         `;
         container.appendChild(card);
@@ -225,13 +226,19 @@ async function handleAddActivity(event) {
     }
 }
 
-async function joinActivity(id) {
+async function joinActivity(id, button) {
+
+    button.disabled = true;
+    button.textContent = "Beigetreten";
     try {
-        await apiFetch(`/activities/join/${id}`, { method: 'POST' });
+        await apiFetch(`/activities/join/${id}`, {
+            method: 'POST'
+        });
         showAlert('Erfolgreich beigetreten!');
-        if (currentFilter === 'getAllJoined') loadActivities(currentFilter);
     } catch (error) {
-        console.error("Join Activity Error", error);
+        button.disabled = false;
+        button.textContent = "Beitreten";
+        console.error(error);
     }
 }
 
@@ -244,5 +251,120 @@ async function deleteActivity(id) {
         loadActivities(currentFilter);
     } catch (error) {
         console.error("Delete Activity Error", error);
+    }
+}
+
+async function searchActivities() {
+
+    const title = document.getElementById('search-title').value;
+    const location = document.getElementById('search-location').value;
+    const maxPrice = document.getElementById('search-price').value;
+
+    let query = [];
+
+    if(title) query.push(`title=${encodeURIComponent(title)}`);
+    if(location) query.push(`location=${encodeURIComponent(location)}`);
+    if(maxPrice) query.push(`maxPrice=${maxPrice}`);
+
+    const url = `/activities/search?${query.join("&")}`;
+
+    try {
+        const data = await apiFetch(url);
+        renderActivities(data);
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+async function editActivity(id) {
+
+    const title =
+        prompt("Neuer Titel:");
+
+    const location =
+        prompt("Neuer Ort:");
+
+    const price =
+        prompt("Neuer Preis:");
+
+    const description =
+        prompt("Neue Beschreibung:");
+
+    const userLimit =
+        prompt("Neues Teilnehmerlimit:");
+
+    if (!title || !location) return;
+
+    const payload = {
+        title,
+        location,
+        price: parseInt(price),
+        description,
+        userLimit: parseInt(userLimit)
+    };
+
+    try {
+
+        await apiFetch(`/activities/update/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+
+        showAlert("Aktivität aktualisiert!");
+
+        loadActivities(currentFilter);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+}
+
+function openEditBox(act) {
+
+    document
+        .getElementById('edit-activity-box')
+        .classList.remove('hidden');
+
+    document.getElementById('edit-id').value = act.id;
+    document.getElementById('edit-title').value = act.title;
+    document.getElementById('edit-description').value = act.description;
+    document.getElementById('edit-location').value = act.location;
+    document.getElementById('edit-price').value = act.price;
+    document.getElementById('edit-limit').value = act.userLimit;
+}
+
+function closeEditBox() {
+
+    document
+        .getElementById('edit-activity-box')
+        .classList.add('hidden');
+}
+
+async function submitEditActivity(event) {
+
+    event.preventDefault();
+
+    const id = document.getElementById('edit-id').value;
+
+    const payload = {
+        title: document.getElementById('edit-title').value,
+        description: document.getElementById('edit-description').value,
+        location: document.getElementById('edit-location').value,
+        price: parseInt(document.getElementById('edit-price').value),
+        userLimit: parseInt(document.getElementById('edit-limit').value)
+    };
+
+    try {
+        await apiFetch(`/activities/update/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+        showAlert("Aktivität aktualisiert!");
+        closeEditBox();
+        loadActivities(currentFilter);
+    } catch (error) {
+        console.error(error);
     }
 }

@@ -36,12 +36,23 @@ public class ActivityService {
         return allActivities;
     }
 
+    public List<Activity> searchActivities(String title, String location, Integer maxPrice) {
+        return activities.search(title, location, maxPrice);
+    }
+
     public void joinActivity(UUID userId, UUID activityId) {
-         int currentParticipants = activities.countParticipants(activityId);
-         Activity activity = activities.getActivityById(activityId);
-         if (currentParticipants >= activity.getUserLimit()) {
-              throw new IllegalStateException("Activity is already full!");
-         }
+
+        if (activities.isUserJoined(userId, activityId)) {
+            throw new IllegalStateException("User already joined this activity!");
+        }
+
+        int currentParticipants = activities.countParticipants(activityId);
+
+        Activity activity = activities.getActivityById(activityId);
+
+        if (currentParticipants >= activity.getUserLimit()) {
+            throw new IllegalStateException("Activity is already full!");
+        }
 
         activities.joinActivity(userId, activityId);
     }
@@ -51,6 +62,9 @@ public class ActivityService {
     }
     public void deleteActivity(UUID id) {
         activities.deleteById(id);
+    }
+    public void updateActivity(UUID id, Activity updatedActivity) {
+        activities.update(id, updatedActivity);
     }
 
     public boolean isInvalid(Activity activity) {

@@ -51,6 +51,8 @@ public class ActivityController implements HttpHandler {
                 routingPath = BASE + "delete";
             } else if (path.startsWith(BASE + "join/")) {
                 routingPath = BASE + "join";
+            } else if (path.startsWith(BASE + "update/")) {
+                routingPath = BASE + "update";
             }
 
             // Route based on the NORMALIZED path
@@ -62,6 +64,8 @@ public class ActivityController implements HttpHandler {
                 case BASE + "add" -> handleAddRequest(method, exchange);
                 case BASE + "delete" -> handleDeleteRequest(method, exchange);
                 case BASE + "join" -> handljoinRequest(method, exchange);
+                case BASE + "search" -> handleSearchRequest(method, exchange);
+                case BASE + "update" -> handleUpdateRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -208,6 +212,76 @@ public class ActivityController implements HttpHandler {
 
             default -> {
                 String response = "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+    private void handleSearchRequest(String method, HttpExchange exchange) throws IOException {
+    // Handle GET for /api/activities/join/{String ID}
+        switch (method) {
+            case "GET" -> {
+
+                String query = exchange.getRequestURI().getQuery();
+
+                String title = null;
+                String location = null;
+                Integer maxPrice = null;
+
+                if (query != null) {
+                    String[] params = query.split("&");
+
+                    for (String param : params) {
+                        String[] pair = param.split("=");
+
+                        if (pair.length == 2) {
+                            switch (pair[0]) {
+                                case "title" -> title = pair[1];
+                                case "location" -> location = pair[1];
+                                case "maxPrice" -> maxPrice = Integer.parseInt(pair[1]);
+                            }
+                        }
+                    }
+                }
+
+                List<Activity> activities =
+                        activityService.searchActivities(title, location, maxPrice);
+
+                String response = activityToJson(activities);
+
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+
+            default -> {
+                String response = "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
+    private void handleUpdateRequest(String method, HttpExchange exchange) throws IOException {
+
+        switch (method) {
+            case "PUT" -> {
+            getAuthenticatedUserId(exchange);
+            String path =
+                exchange.getRequestURI().getPath();
+            String[] segments = path.split("/");
+            String idString =
+                segments[segments.length - 1];
+            UUID id = UUID.fromString(idString);
+            InputStream is =
+                exchange.getRequestBody();
+            Activity updatedActivity =
+                getActivityFromHttpInputStream(is);
+            activityService.updateActivity(id, updatedActivity);
+            String response =
+                "{ \"message\": \"Activity updated successfully\" }";
+            ApiUtils.sendResponse(exchange, 200, response);
+        }
+
+            default -> {
+                String response =
+                    "{ \"error\": \"Method not allowed\" }";
                 ApiUtils.sendResponse(exchange, 405, response);
             }
         }

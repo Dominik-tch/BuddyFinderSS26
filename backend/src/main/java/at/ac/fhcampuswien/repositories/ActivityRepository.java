@@ -186,6 +186,39 @@ public class ActivityRepository {
         }
     }
 
+    public void update(UUID id, Activity updatedActivity) {
+
+        String sql = """
+            UPDATE activities
+            SET
+            title = ?,
+            location = ?,
+            price = ?,
+            description = ?,
+            user_limit = ?
+            WHERE id = ?
+        """;
+
+        try (
+            Connection conn = DatabaseUtil.getConnection();
+            PreparedStatement pstmt =
+                conn.prepareStatement(sql)
+        ) {
+
+            pstmt.setString(1, updatedActivity.getTitle());
+            pstmt.setString(2, updatedActivity.getLocation());
+            pstmt.setInt(3, updatedActivity.getPrice());
+            pstmt.setString(4, updatedActivity.getDescription());
+            pstmt.setInt(5, updatedActivity.getUserLimit());
+            pstmt.setString(6, id.toString());
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating activity", e);
+        }
+    }
+
     public int countParticipants(UUID activityId) {
         String sql = "SELECT COUNT(*) FROM activity_participants WHERE activity_id = ?";
 
@@ -203,6 +236,93 @@ public class ActivityRepository {
 
         } catch (SQLException e) {
             throw new DatabaseException("Error counting participants for activity", e);
+        }
+    }
+
+    public List<Activity> search(String title, String location, Integer maxPrice) {
+
+        List<Activity> activities = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT * FROM activities WHERE 1=1"
+        );
+
+        List<Object> parameters = new ArrayList<>();
+
+        if (title != null && !title.isBlank()) {
+            sql.append(" AND LOWER(title) LIKE LOWER(?)");
+            parameters.add("%" + title + "%");
+        }
+
+        if (location != null && !location.isBlank()) {
+            sql.append(" AND LOWER(location) LIKE LOWER(?)");
+            parameters.add("%" + location + "%");
+        }
+
+        if (maxPrice != null) {
+            sql.append(" AND price <= ?");
+            parameters.add(maxPrice);
+        }
+
+        try (
+            Connection conn = DatabaseUtil.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql.toString())
+        )   {
+
+            for (int i = 0; i < parameters.size(); i++) {
+                pstmt.setObject(i + 1, parameters.get(i));
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+
+                Activity activity = new Activity(
+                        rs.getString("title"),
+                        rs.getString("owner"),
+                        rs.getInt("price"),
+                        rs.getString("location"),
+                        rs.getInt("user_limit"),
+                        rs.getString("description"),
+                        UUID.fromString(rs.getString("id"))
+                );
+
+                activities.add(activity);
+            }
+
+        } catch (SQLException e) {
+            throw new DatabaseException("Error searching activities", e);
+        }
+
+        return activities;
+    }
+
+    public boolean isUserJoined(UUID userId, UUID activityId) {
+
+        String sql = """
+            SELECT COUNT(*) 
+            FROM activity_participants
+            WHERE user_id = ? AND activity_id = ?
+        """;
+
+        try (
+            Connection conn = DatabaseUtil.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)
+        ) {
+
+        pstmt.setString(1, userId.toString());
+        pstmt.setString(2, activityId.toString());
+
+        ResultSet rs = pstmt.executeQuery();
+
+        if (rs.next()) {
+            return rs.getInt(1) > 0;
+        }
+
+        return false;
+
+        } catch (SQLException e) {
+            throw new DatabaseException("Error checking joined activity", e);
         }
     }
 }
