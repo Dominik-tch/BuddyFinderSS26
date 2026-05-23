@@ -53,6 +53,8 @@ public class ActivityController implements HttpHandler {
                 routingPath = BASE + "join";
             } else if (path.startsWith(BASE + "update/")) {
                 routingPath = BASE + "update";
+            } else if (path.startsWith(BASE + "leave/")) {
+                routingPath = BASE + "leave";
             }
 
             // Route based on the NORMALIZED path
@@ -66,6 +68,7 @@ public class ActivityController implements HttpHandler {
                 case BASE + "join" -> handljoinRequest(method, exchange);
                 case BASE + "search" -> handleSearchRequest(method, exchange);
                 case BASE + "update" -> handleUpdateRequest(method, exchange);
+                case BASE + "leave" -> handleLeaveRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -282,6 +285,30 @@ public class ActivityController implements HttpHandler {
             default -> {
                 String response =
                     "{ \"error\": \"Method not allowed\" }";
+                ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
+    private void handleLeaveRequest(String method, HttpExchange exchange) throws IOException {
+
+        switch (method) {
+            case "DELETE" -> {
+                String userId = getAuthenticatedUserId(exchange);
+                String path = exchange.getRequestURI().getPath();
+                String[] segments = path.split("/");
+                String idString = segments[segments.length - 1];
+                UUID activityId = UUID.fromString(idString);
+                activityService.leaveActivity(UUID.fromString(userId), activityId);
+
+                String response = "{ \"message\": \"Left activity successfully\" }";
+
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+
+            default -> {
+                String response = "{ \"error\": \"Method not allowed\" }";
+
                 ApiUtils.sendResponse(exchange, 405, response);
             }
         }

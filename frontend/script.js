@@ -192,7 +192,9 @@ function renderActivities(activities) {
                 <p class="activity-desc">${act.description || 'Keine Beschreibung'}</p>
             </div>
             <div class="activity-actions">
-                <button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Beitreten</button>
+                ${currentFilter === 'getAllJoined' ? `<button onclick="leaveActivity('${act.id}')" class="btn btn-danger">Verlassen</button>`
+                : `<button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Beitreten</button>`
+}
                 ${currentFilter === 'getAllOwned' ? `<button onclick='openEditBox(${JSON.stringify(act)})' class="btn btn-primary">Bearbeiten</button>
                                                     <button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Löschen</button>` : ''}
             </div>
@@ -238,6 +240,18 @@ async function joinActivity(id, button) {
     } catch (error) {
         button.disabled = false;
         button.textContent = "Beitreten";
+        console.error(error);
+    }
+}
+
+async function leaveActivity(id) {
+    try {
+        await apiFetch(`/activities/leave/${id}`, {
+            method: 'DELETE'
+        });
+        showAlert('Aktivität verlassen.');
+        loadActivities(currentFilter);
+    } catch (error) {
         console.error(error);
     }
 }

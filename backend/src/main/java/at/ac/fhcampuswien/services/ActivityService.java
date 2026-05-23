@@ -66,6 +66,9 @@ public class ActivityService {
     public void updateActivity(UUID id, Activity updatedActivity) {
         activities.update(id, updatedActivity);
     }
+    public void leaveActivity(UUID userId, UUID activityId) {
+        activities.leaveActivity(userId, activityId);
+    }
 
     public boolean isInvalid(Activity activity) {
         return activity == null

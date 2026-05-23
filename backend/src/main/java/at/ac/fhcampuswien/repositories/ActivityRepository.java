@@ -297,6 +297,28 @@ public class ActivityRepository {
         return activities;
     }
 
+    public void leaveActivity(UUID userId, UUID activityId) {
+
+        String sql = """
+            DELETE FROM activity_participants
+            WHERE user_id = ? AND activity_id = ?
+        """;
+
+        try (
+            Connection conn = DatabaseUtil.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)
+        ) {
+
+            pstmt.setString(1, userId.toString());
+            pstmt.setString(2, activityId.toString());
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DatabaseException("Error leaving activity", e);
+        }
+    }
+
     public boolean isUserJoined(UUID userId, UUID activityId) {
 
         String sql = """
