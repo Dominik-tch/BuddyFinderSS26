@@ -34,6 +34,8 @@ public class ActivityRepository {
                         rs.getString("description"),
                         UUID.fromString(rs.getString("id"))
                 );
+                activity.setLatitude(rs.getString("latitude"));
+                activity.setLongitude(rs.getString("longitude"));
                 activity.setParticipants(getParticipants(activity.getId()));
                 activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);
@@ -66,6 +68,8 @@ public class ActivityRepository {
                             rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
+                    activity.setLatitude(rs.getString("latitude"));
+                    activity.setLongitude(rs.getString("longitude"));
                     activity.setParticipants(getParticipants(activity.getId()));
                     activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
@@ -100,6 +104,8 @@ public class ActivityRepository {
                             rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
+                    activity.setLatitude(rs.getString("latitude"));
+                    activity.setLongitude(rs.getString("longitude"));
                     activity.setParticipants(getParticipants(activity.getId()));
                     activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
@@ -128,7 +134,7 @@ public class ActivityRepository {
     }
 
     public void add(Activity activity) {
-        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -140,6 +146,8 @@ public class ActivityRepository {
             pstmt.setString(5, activity.getLocation());
             pstmt.setInt(6, activity.getUserLimit());
             pstmt.setString(7, activity.getDescription());
+            pstmt.setString(8, activity.getLatitude());
+            pstmt.setString(9, activity.getLongitude());
 
             pstmt.executeUpdate();
 
@@ -175,7 +183,7 @@ public class ActivityRepository {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return new Activity(
+                    Activity activity = new Activity(
                             rs.getString("title"),
                             rs.getString("owner"),
                             rs.getInt("price"),
@@ -184,6 +192,9 @@ public class ActivityRepository {
                             rs.getString("description"),
                             UUID.fromString(rs.getString("id"))
                     );
+                    activity.setLatitude(rs.getString("latitude"));
+                    activity.setLongitude(rs.getString("longitude"));
+                    return activity;
                 }
             }
             return null;
@@ -202,7 +213,9 @@ public class ActivityRepository {
             location = ?,
             price = ?,
             description = ?,
-            user_limit = ?
+            user_limit = ?,
+            latitude = ?,
+            longitude = ?
             WHERE id = ?
         """;
 
@@ -217,7 +230,9 @@ public class ActivityRepository {
             pstmt.setInt(3, updatedActivity.getPrice());
             pstmt.setString(4, updatedActivity.getDescription());
             pstmt.setInt(5, updatedActivity.getUserLimit());
-            pstmt.setString(6, id.toString());
+            pstmt.setString(6, updatedActivity.getLatitude());
+            pstmt.setString(7, updatedActivity.getLongitude());
+            pstmt.setString(8, id.toString());
 
             pstmt.executeUpdate();
 
@@ -293,6 +308,8 @@ public class ActivityRepository {
                         rs.getString("description"),
                         UUID.fromString(rs.getString("id"))
                 );
+                activity.setLatitude(rs.getString("latitude"));
+                activity.setLongitude(rs.getString("longitude"));
                 activity.setParticipants(getParticipants(activity.getId()));
                 activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);

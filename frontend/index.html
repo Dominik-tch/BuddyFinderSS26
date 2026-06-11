@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,9 +11,9 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <h1 class="logo">🌱 ActivityBase</h1>
+            <h1 class="logo">🔍 BuddyFinder</h1>
             <div id="nav-auth-buttons">
-                <button onclick="logout()" id="btn-logout" class="btn btn-danger hidden">Abmelden</button>
+                <button onclick="logout()" id="btn-logout" class="btn btn-danger hidden">Logout</button>
             </div>
         </div>
     </nav>
@@ -21,35 +21,35 @@
     <!-- Main Content -->
     <main class="container">
         
-        <!-- Fehlermeldungen / Benachrichtigungen -->
+        <!-- Error messages / Notifications -->
         <div id="alert-box" class="alert hidden"></div>
 
-        <!-- AUTHENTIFIZIERUNG (Login / Registrierung) -->
+        <!-- AUTHENTICATION (Login / Registration) -->
         <section id="view-auth" class="auth-section card">
-            <h2 id="auth-title">Anmelden</h2>
+            <h2 id="auth-title">Login</h2>
             
             <form id="auth-form" onsubmit="handleAuth(event)">
                 <div class="form-group">
-                    <label for="username">Benutzername</label>
+                    <label for="username">Username</label>
                     <input type="text" id="username" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Passwort</label>
+                    <label for="password">Password</label>
                     <input type="password" id="password" required>
                 </div>
                 
-                <!-- Zusätzliche Felder für Registrierung (Standardmäßig versteckt) -->
+                <!-- Additional fields for registration (Hidden by default) -->
                 <div id="register-fields" class="hidden">
                     <div class="form-group">
-                        <label for="email">E-Mail Adresse</label>
+                        <label for="email">Email Address</label>
                         <input type="email" id="email">
                     </div>
                     <div class="form-group">
-                        <label for="firstName">Vorname</label>
+                        <label for="firstName">First Name</label>
                         <input type="text" id="firstName">
                     </div>
                     <div class="form-group">
-                        <label for="lastName">Nachname</label>
+                        <label for="lastName">Last Name</label>
                         <input type="text" id="lastName">
                     </div>
                 </div>
@@ -60,104 +60,104 @@
             </form>
 
             <div class="auth-toggle">
-                <a href="#" onclick="toggleAuthMode()" id="auth-toggle-link">Noch kein Konto? Hier registrieren.</a>
+                <a href="#" onclick="toggleAuthMode()" id="auth-toggle-link">Don't have an account yet? Register here.</a>
             </div>
         </section>
 
-        <!-- DASHBOARD (Aktivitäten) -->
+        <!-- DASHBOARD (Activities) -->
         <section id="view-dashboard" class="hidden">
             
             <!-- Dashboard Navigation -->
             <div class="tabs">
-                <button onclick="loadActivities('getAll')" id="tab-getAll" class="tab-btn active">Alle Aktivitäten</button>
-                <button onclick="loadActivities('getAllOwned')" id="tab-getAllOwned" class="tab-btn">Meine Erstellten</button>
-                <button onclick="loadActivities('getAllJoined')" id="tab-getAllJoined" class="tab-btn">Meine Teilnahmen</button>
+                <button onclick="loadActivities('getAll')" id="tab-getAll" class="tab-btn active">All Activities</button>
+                <button onclick="loadActivities('getAllOwned')" id="tab-getAllOwned" class="tab-btn">My Created Activities</button>
+                <button onclick="loadActivities('getAllJoined')" id="tab-getAllJoined" class="tab-btn">Joined Activities</button>
             </div>
 
-            <!-- Aktivität hinzufügen -->
+            <!-- Add Activity -->
             <div class="add-activity card border-brand">
-                <h3>Neue Aktivität erstellen</h3>
+                <h3>Create New Activity</h3>
                 <form id="add-activity-form" onsubmit="handleAddActivity(event)">
                     <div class="form-group">
-                        <label for="act-title">Titel</label>
+                        <label for="act-title">Title</label>
                         <input type="text" id="act-title" required>
                     </div>
                     <div class="form-group">
-                        <label for="act-desc">Beschreibung</label>
+                        <label for="act-desc">Description</label>
                         <input type="text" id="act-desc" required>
                     </div>
                     <div class="form-group">
-                        <label for="act-location">Ort</label>
+                        <label for="act-location">Location</label>
                         <input type="text" id="act-location" required>
                     </div>
                     <div class="form-group">
-                        <label for="act-price">Preis (€)</label>
+                        <label for="act-price">Price (€)</label>
                         <input type="number" id="act-price" min="0" required>
                     </div>
                     <div class="form-group">
-                        <label for="act-limit">Teilnehmer-Limit</label>
+                        <label for="act-limit">Participant Limit</label>
                         <input type="number" id="act-limit" min="1" required>
                     </div>
                     <div style="width: 100%; text-align: right; margin-top: 10px;">
-                        <button type="submit" class="btn btn-primary">Aktivität erstellen</button>
+                        <button type="submit" class="btn btn-primary">Create Activity</button>
                     </div>
                 </form>
             </div>
 
             <div id="edit-activity-box" class="add-activity card border-brand hidden">
-            <h3>Aktivität bearbeiten</h3>
+            <h3>Edit Activity</h3>
             <form id="edit-activity-form" onsubmit="submitEditActivity(event)">
 
             <input type="hidden" id="edit-id">
 
             <div class="form-group">
-                <label>Titel</label>
+                <label>Title</label>
                 <input type="text" id="edit-title" required>
             </div>
 
             <div class="form-group">
-                <label>Beschreibung</label>
+                <label>Description</label>
                 <input type="text" id="edit-description" required>
             </div>
 
             <div class="form-group">
-                <label>Ort</label>
+                <label>Location</label>
                 <input type="text" id="edit-location" required>
             </div>
 
             <div class="form-group">
-                <label>Preis</label>
+                <label>Price</label>
                 <input type="number" id="edit-price" required>
             </div>
 
             <div class="form-group">
-                <label>Teilnehmerlimit</label>
+                <label>Participant Limit</label>
                 <input type="number" id="edit-limit" required>
             </div>
 
             <div style="display:flex; gap:10px; margin-top:1rem;">
-                <button type="submit" class="btn btn-primary">Speichern</button>
-                <button type="button" onclick="closeEditBox()" class="btn btn-secondary">Abbrechen</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" onclick="closeEditBox()" class="btn btn-secondary">Cancel</button>
 
         </div>
     </form>
 </div>
 
-            <!-- Liste der Aktivitäten -->
-            <h3 id="list-title" class="section-title">Aktivitäten</h3>
+            <!-- List of Activities -->
+            <h3 id="list-title" class="section-title">Activities</h3>
             <div id="activities-container" class="grid-container">
-                <!-- Aktivitäten werden hier per JS eingefügt -->
+                <!-- Activities are inserted here via JS -->
             </div>
 
             <div class="card search-bar" style="margin-bottom: 1.5rem;">
 
-            <input type="text" id="search-title" placeholder="Titel suchen">
+            <input type="text" id="search-title" placeholder="Search Title">
 
-            <input type="text" id="search-location" placeholder="Ort">
+            <input type="text" id="search-location" placeholder="Location">
 
-            <input type="number" id="search-price" placeholder="Max Preis">
+            <input type="number" id="search-price" placeholder="Max Price">
 
-            <button onclick="searchActivities()" class="btn btn-primary">Suchen</button>
+            <button onclick="searchActivities()" class="btn btn-primary">Search</button>
 
             </div>
 

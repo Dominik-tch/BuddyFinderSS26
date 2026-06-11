@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class Main {
-    private final static int SERVER_PORT = 8080;
+    private final static int SERVER_PORT = 8081;
 
     public static void main(String[] args) throws IOException {
         // Create an HTTP server listening on defined port

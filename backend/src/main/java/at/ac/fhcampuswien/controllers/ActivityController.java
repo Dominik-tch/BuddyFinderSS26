@@ -21,6 +21,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+
 public class ActivityController implements HttpHandler {
     private final ActivityService activityService = new ActivityService(new ActivityRepository());
     private final SessionService sessionService = new SessionService(new SessionRepository());
@@ -152,7 +158,7 @@ public class ActivityController implements HttpHandler {
         }
     }
 
-    private void handleAddRequest(String method, HttpExchange exchange) throws IOException {
+   private void handleAddRequest(String method, HttpExchange exchange) throws IOException {
         // Handle POST for /api/activities/add
         switch (method) {
             case "POST" -> {
@@ -161,12 +167,67 @@ public class ActivityController implements HttpHandler {
                 String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
+                
                 //add the current userName as owner by the userID
                 activity.setOwner(userService.getUserById(UUID.fromString(userId)).getUserName());
+
+                // ==========================================================
+                // MILESTONE 8: CONSUME EXTERNAL REST WEB SERVICE
+                // ==========================================================
+                try {
+                    // 1. Get the location the user typed in and format it for a URL
+                    String locationStr = activity.getLocation() != null ? activity.getLocation() : "Vienna";
+                    String formattedLocation = locationStr.replace(" ", "+");
+                    String mapUrl = "https://nominatim.openstreetmap.org/search?q=" + formattedLocation + "&format=json";
+
+                    // 2. Build the HTTP Client and Request
+                    HttpClient client = HttpClient.newBuilder()
+                            .connectTimeout(Duration.ofSeconds(5)) // Don't hang the server if the API is slow
+                            .build();
+                            
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(mapUrl))
+                            .header("User-Agent", "BuddyFinderApp/1.0") // Required by OpenStreetMap
+                            .GET()
+                            .build();
+
+                    // 3. Send the request to the external API
+                    HttpResponse<String> apiResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                    // 4. Print the result to the server terminal to prove it works!
+                    System.out.println("-------------------------------------------------");
+                    System.out.println("MILESTONE 8: EXTERNAL API CALL SUCCESSFUL");
+                    System.out.println("Searched Location: " + locationStr);
+                    System.out.println("GPS Data Received: " + apiResponse.body());
+                    System.out.println("-------------------------------------------------");
+
+                    // ==========================================
+                    // EXTRACT AND SAVE COORDINATES
+                    // ==========================================
+                    com.google.gson.JsonArray jsonArray = com.google.gson.JsonParser.parseString(apiResponse.body()).getAsJsonArray();
+                    
+                    if (!jsonArray.isEmpty()) {
+                        com.google.gson.JsonObject firstResult = jsonArray.get(0).getAsJsonObject();
+                        String lat = firstResult.get("lat").getAsString();
+                        String lon = firstResult.get("lon").getAsString();
+                        
+                        activity.setLatitude(lat);
+                        activity.setLongitude(lon);
+                    }
+                    // ==========================================
+                    
+                } catch (Exception e) {
+                    System.out.println("Warning: External API call failed - " + e.getMessage());
+                    // We catch the error but don't throw it, so the app still creates the activity 
+                    // even if the map server is temporarily down.
+                }
+                // ==========================================================
+
                 //Check if activity already exists
                 if (activityService.exists(activity)) {
                     throw new IllegalStateException("Activity already exists");
                 }
+                
                 activityService.addActivity(activity);
                 response = "{ \"message\": \"Activity added successfully\" }";
                 ApiUtils.sendResponse(exchange, 201, response);

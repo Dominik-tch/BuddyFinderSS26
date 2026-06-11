@@ -23,7 +23,9 @@ public class DatabaseUtil {
                 price INT NOT NULL,
                 location VARCHAR(255) NOT NULL,
                 user_limit INT NOT NULL,
-                description VARCHAR(255)
+                description VARCHAR(255),
+                latitude VARCHAR(255),
+                longitude VARCHAR(255)
             );
         """;
         String createUserTable = """
