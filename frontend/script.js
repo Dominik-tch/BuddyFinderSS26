@@ -1,11 +1,11 @@
-// --- KONFIGURATION ---
-const BASE_URL = 'http://localhost:8080/api'; // Stelle sicher, dass der Port stimmt!
+// --- CONFIGURATION ---
+const BASE_URL = 'http://localhost:8081/api'; // Make sure the port is correct!
 
 // --- STATE ---
 let isLoginMode = true;
 let currentFilter = 'getAll'; 
 
-// --- INITIALISIERUNG ---
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
 });
@@ -45,7 +45,7 @@ async function apiFetch(endpoint, options = {}) {
 
         if (!response.ok) {
             if (response.status === 401) logout(false);
-            throw new Error(data.error || 'Ein Fehler ist aufgetreten');
+            throw new Error(data.error || 'An error occurred');
         }
         return data;
     } catch (error) {
@@ -54,7 +54,7 @@ async function apiFetch(endpoint, options = {}) {
     }
 }
 
-// --- UI LOGIK ---
+// --- UI LOGIC ---
 function checkAuthStatus() {
     if (getToken()) {
         document.getElementById('view-auth').classList.add('hidden');
@@ -72,12 +72,12 @@ function toggleAuthMode() {
     isLoginMode = !isLoginMode;
     const regFields = document.getElementById('register-fields');
     
-    // UI Texte anpassen
-    document.getElementById('auth-title').textContent = isLoginMode ? 'Anmelden' : 'Registrieren';
-    document.getElementById('auth-btn-text').textContent = isLoginMode ? 'Login' : 'Konto erstellen';
-    document.getElementById('auth-toggle-link').textContent = isLoginMode ? 'Noch kein Konto? Hier registrieren.' : 'Bereits ein Konto? Hier anmelden.';
+    // Update UI texts
+    document.getElementById('auth-title').textContent = isLoginMode ? 'Login' : 'Register';
+    document.getElementById('auth-btn-text').textContent = isLoginMode ? 'Login' : 'Create Account';
+    document.getElementById('auth-toggle-link').textContent = isLoginMode ? "Don't have an account yet? Register here." : "Already have an account? Login here.";
     
-    // Felder ein/ausblenden und Required-Attribut umschalten
+    // Toggle fields and required attribute
     if (isLoginMode) {
         regFields.classList.add('hidden');
         document.getElementById('email').required = false;
@@ -101,13 +101,13 @@ async function handleAuth(event) {
     event.preventDefault();
     const endpoint = isLoginMode ? '/users/login' : '/users/register';
     
-    // Basis-Payload
+    // Basic payload
     let payload = {
         userName: document.getElementById('username').value,
         password: document.getElementById('password').value
     };
 
-    // Zusätzliche Felder, wenn es eine Registrierung ist
+    // Additional fields if it's a registration
     if (!isLoginMode) {
         payload.email = document.getElementById('email').value;
         payload.firstName = document.getElementById('firstName').value;
@@ -122,12 +122,12 @@ async function handleAuth(event) {
 
         if (isLoginMode && data.sessionID) {
             localStorage.setItem('sessionToken', data.sessionID);
-            showAlert('Erfolgreich eingeloggt!');
+            showAlert('Successfully logged in!');
             checkAuthStatus();
         } else if (!isLoginMode) {
-            showAlert('Erfolgreich registriert! Bitte logge dich nun ein.');
+            showAlert('Successfully registered! Please log in now.');
             toggleAuthMode();
-            // Formular leeren für sauberen Login
+            // Clear form for a clean login
             document.getElementById('auth-form').reset();
         }
     } catch (error) {
@@ -143,7 +143,7 @@ async function logout(callApi = true) {
     }
     localStorage.removeItem('sessionToken');
     checkAuthStatus();
-    showAlert('Erfolgreich abgemeldet.');
+    showAlert('Successfully logged out.');
 }
 
 // --- ACTIVITY API ---
@@ -151,19 +151,19 @@ async function loadActivities(filterType) {
     currentFilter = filterType;
     updateTabUI(filterType);
 
-    let title = "Alle Aktivitäten";
-    if(filterType === 'getAllOwned') title = "Meine erstellten Aktivitäten";
-    if(filterType === 'getAllJoined') title = "Meine Teilnahmen";
+    let title = "All Activities";
+    if(filterType === 'getAllOwned') title = "My Created Activities";
+    if(filterType === 'getAllJoined') title = "My Joined Activities";
     document.getElementById('list-title').textContent = title;
 
     const container = document.getElementById('activities-container');
-    container.innerHTML = '<p>Lade Aktivitäten...</p>';
+    container.innerHTML = '<p>Loading activities...</p>';
 
     try {
         const data = await apiFetch(`/activities/${filterType}`);
         renderActivities(data);
     } catch (error) {
-        container.innerHTML = `<p style="color: var(--danger)">Fehler beim Laden: ${error.message}</p>`;
+        container.innerHTML = `<p style="color: var(--danger)">Error loading: ${error.message}</p>`;
     }
 }
 
@@ -172,7 +172,7 @@ function renderActivities(activities) {
     container.innerHTML = '';
 
     if (!activities || activities.length === 0) {
-        container.innerHTML = '<p>Keine Aktivitäten gefunden.</p>';
+        container.innerHTML = '<p>No activities found.</p>';
         return;
     }
 
@@ -180,26 +180,33 @@ function renderActivities(activities) {
         const card = document.createElement('div');
         card.className = "activity-card";
         
+        // --- NEW LOGIC: Generate the clickable map link if coordinates exist ---
+        const mapLink = (act.latitude && act.longitude) 
+            ? `<a href="https://www.google.com/maps/search/?api=1&query=${act.latitude},${act.longitude}" target="_blank" style="color: var(--brand); text-decoration: underline;">📍 ${act.location}</a>` 
+            : `📍 ${act.location}`;
+        
         card.innerHTML = `
             <div>
                 <div class="activity-header">
-                    <h4>${act.title || 'Ohne Titel'}</h4>
-                    <span class="badge">Erstellt von: ${act.owner || 'Unbekannt'}</span>
+                    <h4>${act.title || 'Untitled'}</h4>
+                    <span class="badge">Created by: ${act.owner || 'Unknown'}</span>
                 </div>
+                
                 <div style="font-size: 0.85rem; color: var(--brand); margin-bottom: 0.5rem; font-weight: bold;">
-                    📍 ${act.location} &nbsp;|&nbsp; 💰 ${act.price}€ &nbsp;|&nbsp; 👥 Limit: ${act.currentParticipants}/${act.userLimit} Teilnehmer
+                    ${mapLink} &nbsp;|&nbsp; 💰 ${act.price}€ &nbsp;|&nbsp; 👥 Limit: ${act.currentParticipants}/${act.userLimit} Participants
                 </div>
-                <p class="activity-desc">${act.description || 'Keine Beschreibung'}</p>
-                <p class="participants-list">Teilnehmer:${act.participants?.map(user => 
-                `<span class="participant-link" onclick="openUser('${user.id}')">${user.userName}</span>`).join(", ") || "Keine"}
+                
+                <p class="activity-desc">${act.description || 'No description'}</p>
+                <p class="participants-list">Participants:${act.participants?.map(user => 
+                `<span class="participant-link" onclick="openUser('${user.id}')">${user.userName}</span>`).join(", ") || "None"}
                 </p>
             </div>
             <div class="activity-actions">
-                ${currentFilter === 'getAllJoined' ? `<button onclick="leaveActivity('${act.id}')" class="btn btn-danger">Verlassen</button>`
-                : `<button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Beitreten</button>`
+                ${currentFilter === 'getAllJoined' ? `<button onclick="leaveActivity('${act.id}')" class="btn btn-danger">Leave</button>`
+                : `<button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Join</button>`
 }
-                ${currentFilter === 'getAllOwned' ? `<button onclick='openEditBox(${JSON.stringify(act)})' class="btn btn-primary">Bearbeiten</button>
-                                                    <button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Löschen</button>` : ''}
+                ${currentFilter === 'getAllOwned' ? `<button onclick='openEditBox(${JSON.stringify(act)})' class="btn btn-primary">Edit</button>
+                                                    <button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Delete</button>` : ''}
             </div>
         `;
         container.appendChild(card);
@@ -209,7 +216,7 @@ function renderActivities(activities) {
 async function handleAddActivity(event) {
     event.preventDefault();
     
-    // Daten auslesen und Datentypen sicherstellen (int für Price und Limit)
+    // Read data and ensure correct data types (int for Price and Limit)
     const payload = {
         title: document.getElementById('act-title').value,
         description: document.getElementById('act-desc').value,
@@ -223,7 +230,7 @@ async function handleAddActivity(event) {
             method: 'POST',
             body: JSON.stringify(payload) 
         });
-        showAlert('Aktivität erfolgreich erstellt!');
+        showAlert('Activity successfully created!');
         document.getElementById('add-activity-form').reset();
         loadActivities(currentFilter);
     } catch (error) {
@@ -234,15 +241,15 @@ async function handleAddActivity(event) {
 async function joinActivity(id, button) {
 
     button.disabled = true;
-    button.textContent = "Beigetreten";
+    button.textContent = "Joined";
     try {
         await apiFetch(`/activities/join/${id}`, {
             method: 'POST'
         });
-        showAlert('Erfolgreich beigetreten!');
+        showAlert('Successfully joined!');
     } catch (error) {
         button.disabled = false;
-        button.textContent = "Beitreten";
+        button.textContent = "Join";
         console.error(error);
     }
 }
@@ -252,7 +259,7 @@ async function leaveActivity(id) {
         await apiFetch(`/activities/leave/${id}`, {
             method: 'DELETE'
         });
-        showAlert('Aktivität verlassen.');
+        showAlert('Left activity.');
         loadActivities(currentFilter);
     } catch (error) {
         console.error(error);
@@ -260,11 +267,11 @@ async function leaveActivity(id) {
 }
 
 async function deleteActivity(id) {
-    if(!confirm('Bist du sicher, dass du diese Aktivität löschen möchtest?')) return;
+    if(!confirm('Are you sure you want to delete this activity?')) return;
     
     try {
         await apiFetch(`/activities/delete/${id}`, { method: 'DELETE' });
-        showAlert('Aktivität gelöscht.');
+        showAlert('Activity deleted.');
         loadActivities(currentFilter);
     } catch (error) {
         console.error("Delete Activity Error", error);
@@ -296,19 +303,19 @@ async function searchActivities() {
 async function editActivity(id) {
 
     const title =
-        prompt("Neuer Titel:");
+        prompt("New Title:");
 
     const location =
-        prompt("Neuer Ort:");
+        prompt("New Location:");
 
     const price =
-        prompt("Neuer Preis:");
+        prompt("New Price:");
 
     const description =
-        prompt("Neue Beschreibung:");
+        prompt("New Description:");
 
     const userLimit =
-        prompt("Neues Teilnehmerlimit:");
+        prompt("New Participant Limit:");
 
     if (!title || !location) return;
 
@@ -327,7 +334,7 @@ async function editActivity(id) {
             body: JSON.stringify(payload)
         });
 
-        showAlert("Aktivität aktualisiert!");
+        showAlert("Activity updated!");
 
         loadActivities(currentFilter);
 
@@ -378,7 +385,7 @@ async function submitEditActivity(event) {
             method: 'PUT',
             body: JSON.stringify(payload)
         });
-        showAlert("Aktivität aktualisiert!");
+        showAlert("Activity updated!");
         closeEditBox();
         loadActivities(currentFilter);
     } catch (error) {
@@ -386,8 +393,8 @@ async function submitEditActivity(event) {
     }
 
     function openUser(userId) {
-        console.log("User öffnen:", userId);
-        // später:
-        // Profil anzeigen
+        console.log("Open user:", userId);
+        // later:
+        // show profile
     }
 }

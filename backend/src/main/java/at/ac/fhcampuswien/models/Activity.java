@@ -13,6 +13,10 @@ public class Activity {
     private String description;
     private int currentParticipants;
     private List<UserPreview> participants;
+    
+    // Milestone 8 Coordinate Storage
+    private String latitude;
+    private String longitude;
 
     public Activity() {
         this.id = UUID.randomUUID();
@@ -74,6 +78,23 @@ public class Activity {
         this.participants = participants;
     }
 
+    // Milestone 8 Getters and Setters
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
@@ -86,11 +107,13 @@ public class Activity {
                 java.util.Objects.equals(title, other.title) &&
                 java.util.Objects.equals(owner, other.owner) &&
                 java.util.Objects.equals(location, other.location) &&
-                java.util.Objects.equals(description, other.description);
+                java.util.Objects.equals(description, other.description) &&
+                java.util.Objects.equals(latitude, other.latitude) &&
+                java.util.Objects.equals(longitude, other.longitude);
     }
 
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(title, owner, price, location, userLimit, description);
+        return java.util.Objects.hash(title, owner, price, location, userLimit, description, latitude, longitude);
     }
 }
