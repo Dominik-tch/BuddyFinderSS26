@@ -167,67 +167,18 @@ public class ActivityController implements HttpHandler {
                 String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
-                
+
                 //add the current userName as owner by the userID
                 activity.setOwner(userService.getUserById(UUID.fromString(userId)).getUserName());
 
-                // ==========================================================
-                // MILESTONE 8: CONSUME EXTERNAL REST WEB SERVICE
-                // ==========================================================
-                try {
-                    // 1. Get the location the user typed in and format it for a URL
-                    String locationStr = activity.getLocation() != null ? activity.getLocation() : "Vienna";
-                    String formattedLocation = locationStr.replace(" ", "+");
-                    String mapUrl = "https://nominatim.openstreetmap.org/search?q=" + formattedLocation + "&format=json";
-
-                    // 2. Build the HTTP Client and Request
-                    HttpClient client = HttpClient.newBuilder()
-                            .connectTimeout(Duration.ofSeconds(5)) // Don't hang the server if the API is slow
-                            .build();
-                            
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(mapUrl))
-                            .header("User-Agent", "BuddyFinderApp/1.0") // Required by OpenStreetMap
-                            .GET()
-                            .build();
-
-                    // 3. Send the request to the external API
-                    HttpResponse<String> apiResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-                    // 4. Print the result to the server terminal to prove it works!
-                    System.out.println("-------------------------------------------------");
-                    System.out.println("MILESTONE 8: EXTERNAL API CALL SUCCESSFUL");
-                    System.out.println("Searched Location: " + locationStr);
-                    System.out.println("GPS Data Received: " + apiResponse.body());
-                    System.out.println("-------------------------------------------------");
-
-                    // ==========================================
-                    // EXTRACT AND SAVE COORDINATES
-                    // ==========================================
-                    com.google.gson.JsonArray jsonArray = com.google.gson.JsonParser.parseString(apiResponse.body()).getAsJsonArray();
-                    
-                    if (!jsonArray.isEmpty()) {
-                        com.google.gson.JsonObject firstResult = jsonArray.get(0).getAsJsonObject();
-                        String lat = firstResult.get("lat").getAsString();
-                        String lon = firstResult.get("lon").getAsString();
-                        
-                        activity.setLatitude(lat);
-                        activity.setLongitude(lon);
-                    }
-                    // ==========================================
-                    
-                } catch (Exception e) {
-                    System.out.println("Warning: External API call failed - " + e.getMessage());
-                    // We catch the error but don't throw it, so the app still creates the activity 
-                    // even if the map server is temporarily down.
-                }
-                // ==========================================================
+                //add coordinates from location via openstreetmap api
+                fetchAndSetCoordinates(activity);
 
                 //Check if activity already exists
                 if (activityService.exists(activity)) {
                     throw new IllegalStateException("Activity already exists");
                 }
-                
+
                 activityService.addActivity(activity);
                 response = "{ \"message\": \"Activity added successfully\" }";
                 ApiUtils.sendResponse(exchange, 201, response);
@@ -268,6 +219,7 @@ public class ActivityController implements HttpHandler {
                 String path = exchange.getRequestURI().getPath();
                 String[] segments = path.split("/");
                 String idString = segments[segments.length - 1];
+
                 UUID activityId = UUID.fromString(idString);
                 activityService.joinActivity(UUID.fromString(userId), activityId);
                 String response = "{ \"message\": \"Joined activity successfully\" }";
@@ -327,16 +279,15 @@ public class ActivityController implements HttpHandler {
         switch (method) {
             case "PUT" -> {
             getAuthenticatedUserId(exchange);
-            String path =
-                exchange.getRequestURI().getPath();
+            String path = exchange.getRequestURI().getPath();
             String[] segments = path.split("/");
-            String idString =
-                segments[segments.length - 1];
+            String idString = segments[segments.length - 1];
+
             UUID id = UUID.fromString(idString);
-            InputStream is =
-                exchange.getRequestBody();
-            Activity updatedActivity =
-                getActivityFromHttpInputStream(is);
+            InputStream is = exchange.getRequestBody();
+            Activity updatedActivity = getActivityFromHttpInputStream(is);
+            //add coordinates from location via openstreetmap api
+            fetchAndSetCoordinates(updatedActivity);
             activityService.updateActivity(id, updatedActivity);
             String response =
                 "{ \"message\": \"Activity updated successfully\" }";
@@ -372,6 +323,40 @@ public class ActivityController implements HttpHandler {
 
                 ApiUtils.sendResponse(exchange, 405, response);
             }
+        }
+    }
+
+    private void fetchAndSetCoordinates(Activity activity) {
+        String locationStr = activity.getLocation() != null ? activity.getLocation() : "Vienna";
+        String formattedLocation = java.net.URLEncoder.encode(locationStr, java.nio.charset.StandardCharsets.UTF_8);
+        String mapUrl = "https://nominatim.openstreetmap.org/search?q=" + formattedLocation + "&format=json";
+
+        try {
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(mapUrl))
+                    .header("User-Agent", "BuddyFinderApp/1.0")
+                    .GET()
+                    .build();
+            HttpResponse<String> apiResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            com.google.gson.JsonArray jsonArray = com.google.gson.JsonParser.parseString(apiResponse.body()).getAsJsonArray();
+
+            if (!jsonArray.isEmpty()) {
+                com.google.gson.JsonObject firstResult = jsonArray.get(0).getAsJsonObject();
+                activity.setLatitude(firstResult.get("lat").getAsString());
+                activity.setLongitude(firstResult.get("lon").getAsString());
+
+                System.out.println("Coordinates successfully fetched and set for: " + locationStr);
+            } else {
+                System.out.println("Warning: OpenStreetMap returned no results for location: " + locationStr);
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Warning: Network error calling OpenStreetMap - " + e.getMessage());
+        } catch (com.google.gson.JsonSyntaxException | NullPointerException e) {
+            System.out.println("Warning: Failed to parse GPS data from OpenStreetMap - " + e.getMessage());
         }
     }
 
