@@ -36,6 +36,7 @@ public class ActivityRepository {
                 );
                 activity.setLatitude(rs.getString("latitude"));
                 activity.setLongitude(rs.getString("longitude"));
+                activity.setWeather(rs.getString("weather"));
                 activity.setParticipants(getParticipants(activity.getId()));
                 activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);
@@ -70,6 +71,7 @@ public class ActivityRepository {
                     );
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
+                    activity.setWeather(rs.getString("weather"));
                     activity.setParticipants(getParticipants(activity.getId()));
                     activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
@@ -106,6 +108,7 @@ public class ActivityRepository {
                     );
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
+                    activity.setWeather(rs.getString("weather"));
                     activity.setParticipants(getParticipants(activity.getId()));
                     activity.setCurrentParticipants(countParticipants(activity.getId()));
                     activities.add(activity);
@@ -134,7 +137,7 @@ public class ActivityRepository {
     }
 
     public void add(Activity activity) {
-        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description, latitude, longitude, weather) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -148,6 +151,7 @@ public class ActivityRepository {
             pstmt.setString(7, activity.getDescription());
             pstmt.setString(8, activity.getLatitude());
             pstmt.setString(9, activity.getLongitude());
+            pstmt.setString(10, activity.getWeather());
 
             pstmt.executeUpdate();
 
@@ -194,6 +198,7 @@ public class ActivityRepository {
                     );
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
+                    activity.setWeather(rs.getString("weather"));
                     return activity;
                 }
             }
@@ -215,14 +220,14 @@ public class ActivityRepository {
             description = ?,
             user_limit = ?,
             latitude = ?,
-            longitude = ?
+            longitude = ?,
+            weather = ? 
             WHERE id = ?
         """;
 
         try (
-            Connection conn = DatabaseUtil.getConnection();
-            PreparedStatement pstmt =
-                conn.prepareStatement(sql)
+                Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)
         ) {
 
             pstmt.setString(1, updatedActivity.getTitle());
@@ -232,7 +237,8 @@ public class ActivityRepository {
             pstmt.setInt(5, updatedActivity.getUserLimit());
             pstmt.setString(6, updatedActivity.getLatitude());
             pstmt.setString(7, updatedActivity.getLongitude());
-            pstmt.setString(8, id.toString());
+            pstmt.setString(8, updatedActivity.getWeather());
+            pstmt.setString(9, id.toString());
 
             pstmt.executeUpdate();
 
@@ -310,6 +316,7 @@ public class ActivityRepository {
                 );
                 activity.setLatitude(rs.getString("latitude"));
                 activity.setLongitude(rs.getString("longitude"));
+                activity.setWeather(rs.getString("weather"));
                 activity.setParticipants(getParticipants(activity.getId()));
                 activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);

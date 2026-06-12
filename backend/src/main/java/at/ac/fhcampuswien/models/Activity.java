@@ -13,10 +13,10 @@ public class Activity {
     private String description;
     private int currentParticipants;
     private List<UserPreview> participants;
-    
-    // Milestone 8 Coordinate Storage
+
     private String latitude;
     private String longitude;
+    private String weather;
 
     public Activity() {
         this.id = UUID.randomUUID();
@@ -61,38 +61,32 @@ public class Activity {
         return userLimit;
     }
     public String getDescription() {return description;}
-
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public String getWeather() {return weather;}
+    public String getLongitude() {
+        return longitude;
     }
-
+    public String getLatitude() {
+        return latitude;
+    }
     public int getCurrentParticipants() {
         return currentParticipants;
     }
 
-    public void setCurrentParticipants(int currentParticipants) {
-        this.currentParticipants = currentParticipants;
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
-
     public void setParticipants(List<UserPreview> participants) {
         this.participants = participants;
     }
-
-    // Milestone 8 Getters and Setters
-    public String getLatitude() {
-        return latitude;
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
     }
-
     public void setLatitude(String latitude) {
         this.latitude = latitude;
     }
-
-    public String getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(String longitude) {
-        this.longitude = longitude;
+    public void setWeather(String weather) {this.weather = weather;}
+    public void setCurrentParticipants(int currentParticipants) {
+        this.currentParticipants = currentParticipants;
     }
 
     @Override

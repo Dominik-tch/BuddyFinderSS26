@@ -171,8 +171,9 @@ public class ActivityController implements HttpHandler {
                 //add the current userName as owner by the userID
                 activity.setOwner(userService.getUserById(UUID.fromString(userId)).getUserName());
 
-                //add coordinates from location via openstreetmap api
+                //use the apis for location and weather
                 fetchAndSetCoordinates(activity);
+                fetchAndSetWeather(activity);
 
                 //Check if activity already exists
                 if (activityService.exists(activity)) {
@@ -286,8 +287,9 @@ public class ActivityController implements HttpHandler {
             UUID id = UUID.fromString(idString);
             InputStream is = exchange.getRequestBody();
             Activity updatedActivity = getActivityFromHttpInputStream(is);
-            //add coordinates from location via openstreetmap api
+            //use the apis for location and weather
             fetchAndSetCoordinates(updatedActivity);
+            fetchAndSetWeather(updatedActivity);
             activityService.updateActivity(id, updatedActivity);
             String response =
                 "{ \"message\": \"Activity updated successfully\" }";
@@ -357,6 +359,80 @@ public class ActivityController implements HttpHandler {
             System.out.println("Warning: Network error calling OpenStreetMap - " + e.getMessage());
         } catch (com.google.gson.JsonSyntaxException | NullPointerException e) {
             System.out.println("Warning: Failed to parse GPS data from OpenStreetMap - " + e.getMessage());
+        }
+    }
+
+    private void fetchAndSetWeather(Activity activity) {
+        if (activity.getLatitude() == null || activity.getLongitude() == null) {
+            System.out.println("Warning: Cannot fetch weather without coordinates.");
+            return;
+        }
+
+        try {
+            String weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude="
+                    + activity.getLatitude() + "&longitude=" + activity.getLongitude()
+                    + "&current_weather=true";
+
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(weatherUrl))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            com.google.gson.JsonObject jsonObject = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
+
+            if (jsonObject.has("current_weather")) {
+                com.google.gson.JsonObject currentWeather = jsonObject.getAsJsonObject("current_weather");
+
+                // 1. Extract data from the JSON
+                String temperature = currentWeather.get("temperature").getAsString();
+                String windSpeed = currentWeather.get("windspeed").getAsString();
+                int weatherCode = currentWeather.get("weathercode").getAsInt();
+
+                // 2. Translate the weather code into a readable word (WMO standard)
+                String condition = switch (weatherCode) {
+                    case 0 -> "Clear sky";
+                    case 1 -> "Mainly clear";
+                    case 2 -> "Partly cloudy";
+                    case 3 -> "Overcast";
+                    case 45, 48 -> "Fog";
+                    case 51, 53, 55 -> "Drizzle";
+                    case 61 -> "Light rain";
+                    case 63 -> "Moderate rain";
+                    case 65 -> "Heavy rain";
+                    case 66, 67 -> "Freezing rain";
+                    case 71 -> "Light snow";
+                    case 73 -> "Moderate snow";
+                    case 75 -> "Heavy snow";
+                    case 77 -> "Snow grains";
+                    case 80 -> "Light rain showers";
+                    case 81 -> "Moderate rain showers";
+                    case 82 -> "Heavy rain showers";
+                    case 85, 86 -> "Snow showers";
+                    case 95 -> "Thunderstorm";
+                    case 96, 99 -> "Thunderstorm with heavy hail";
+                    default -> "Unknown";
+                };
+
+                // 3. Combine everything into a comma-separated string
+                String combinedWeather = temperature + " °C, Wind: " + windSpeed + " km/h, " + condition;
+
+                // 4. Save it to the Activity object
+                activity.setWeather(combinedWeather);
+
+                System.out.println("Weather successfully fetched: " + combinedWeather);
+            } else {
+                System.out.println("Warning: Open-Meteo returned unexpected format.");
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.out.println("Warning: Network error calling Open-Meteo - " + e.getMessage());
+        } catch (com.google.gson.JsonSyntaxException | IllegalStateException e) {
+            System.out.println("Warning: Failed to parse Weather data - " + e.getMessage());
         }
     }
 

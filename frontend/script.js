@@ -177,38 +177,116 @@ function renderActivities(activities) {
     }
 
     activities.forEach(act => {
+        // 1. Create the main card container
         const card = document.createElement('div');
         card.className = "activity-card";
         
-        // --- NEW LOGIC: Generate the clickable map link if coordinates exist ---
-        const mapLink = (act.latitude && act.longitude) 
-            ? `<a href="https://www.google.com/maps/search/?api=1&query=${act.latitude},${act.longitude}" target="_blank" style="color: var(--brand); text-decoration: underline;">📍 ${act.location}</a>` 
-            : `📍 ${act.location}`;
+        const contentDiv = document.createElement('div');
+
+        // 2. Build the Header (Title & Owner)
+        const headerDiv = document.createElement('div');
+        headerDiv.className = "activity-header";
         
-        card.innerHTML = `
-            <div>
-                <div class="activity-header">
-                    <h4>${act.title || 'Untitled'}</h4>
-                    <span class="badge">Created by: ${act.owner || 'Unknown'}</span>
-                </div>
-                
-                <div style="font-size: 0.85rem; color: var(--brand); margin-bottom: 0.5rem; font-weight: bold;">
-                    ${mapLink} &nbsp;|&nbsp; 💰 ${act.price}€ &nbsp;|&nbsp; 👥 Limit: ${act.currentParticipants}/${act.userLimit} Participants
-                </div>
-                
-                <p class="activity-desc">${act.description || 'No description'}</p>
-                <p class="participants-list">Participants:${act.participants?.map(user => 
-                `<span class="participant-link" onclick="openUser('${user.id}')">${user.userName}</span>`).join(", ") || "None"}
-                </p>
-            </div>
-            <div class="activity-actions">
-                ${currentFilter === 'getAllJoined' ? `<button onclick="leaveActivity('${act.id}')" class="btn btn-danger">Leave</button>`
-                : `<button onclick="joinActivity('${act.id}', this)" class="btn btn-secondary">Join</button>`
-}
-                ${currentFilter === 'getAllOwned' ? `<button onclick='openEditBox(${JSON.stringify(act)})' class="btn btn-primary">Edit</button>
-                                                    <button onclick="deleteActivity('${act.id}')" class="btn btn-danger">Delete</button>` : ''}
-            </div>
-        `;
+        const titleH4 = document.createElement('h4');
+        titleH4.textContent = act.title || 'Untitled';
+        
+        const ownerSpan = document.createElement('span');
+        ownerSpan.className = "badge";
+        ownerSpan.textContent = `Created by: ${act.owner || 'Unknown'}`;
+        
+        headerDiv.append(titleH4, ownerSpan);
+
+        // 3. Build Meta Info (Location/Map, Price, Limit)
+        const metaDiv = document.createElement('div');
+        metaDiv.className = "activity-meta";
+
+        if (act.latitude && act.longitude) {
+            const mapAnchor = document.createElement('a');
+            mapAnchor.href = `https://maps.google.com/?q=${act.latitude},${act.longitude}`;
+            mapAnchor.target = "_blank";
+            mapAnchor.className = "map-link";
+            mapAnchor.textContent = `📍 ${act.location}`;
+            metaDiv.appendChild(mapAnchor);
+        } else {
+            const locationSpan = document.createElement('span');
+            locationSpan.textContent = `📍 ${act.location}`;
+            metaDiv.appendChild(locationSpan);
+        }
+
+        const detailsSpan = document.createElement('span');
+        detailsSpan.textContent = `  |  💰 ${act.price}€  |  👥 Limit: ${act.currentParticipants}/${act.userLimit} Participants`;
+        metaDiv.appendChild(detailsSpan);
+
+        // 4. Build Weather
+        const weatherDiv = document.createElement('div');
+        weatherDiv.className = "activity-weather";
+        weatherDiv.textContent = `🌤️ Weather: ${act.weather || 'No weather data available'}`;
+
+        // 5. Build Description
+        const descP = document.createElement('p');
+        descP.className = "activity-desc";
+        descP.textContent = act.description || 'No description';
+
+        // 6. Build Participants List
+        const participantsP = document.createElement('p');
+        participantsP.className = "participants-list";
+        participantsP.textContent = "Participants: ";
+        
+        if (act.participants && act.participants.length > 0) {
+            act.participants.forEach((user, index) => {
+                const userSpan = document.createElement('span');
+                userSpan.className = "participant-link";
+                userSpan.textContent = user.userName;
+                // Add click listener safely
+                userSpan.onclick = () => openUser(user.id);
+                participantsP.appendChild(userSpan);
+
+                // Add commas between names
+                if (index < act.participants.length - 1) {
+                    participantsP.appendChild(document.createTextNode(", "));
+                }
+            });
+        } else {
+            participantsP.appendChild(document.createTextNode("None"));
+        }
+
+        // Combine all content parts
+        contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
+
+        // 7. Build Action Buttons
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = "activity-actions";
+
+        if (currentFilter === 'getAllJoined') {
+            const leaveBtn = document.createElement('button');
+            leaveBtn.className = "btn btn-danger";
+            leaveBtn.textContent = "Leave";
+            leaveBtn.onclick = () => leaveActivity(act.id);
+            actionsDiv.appendChild(leaveBtn);
+        } else {
+            const joinBtn = document.createElement('button');
+            joinBtn.className = "btn btn-secondary";
+            joinBtn.textContent = "Join";
+            joinBtn.onclick = function() { joinActivity(act.id, this); };
+            actionsDiv.appendChild(joinBtn);
+        }
+
+        if (currentFilter === 'getAllOwned') {
+            const editBtn = document.createElement('button');
+            editBtn.className = "btn btn-primary";
+            editBtn.textContent = "Edit";
+            editBtn.onclick = () => openEditBox(act);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = "btn btn-danger";
+            deleteBtn.textContent = "Delete";
+            deleteBtn.onclick = () => deleteActivity(act.id);
+
+            actionsDiv.append(editBtn, deleteBtn);
+        }
+
+        // Attach content and actions to the card, and add card to the DOM
+        card.append(contentDiv, actionsDiv);
         container.appendChild(card);
     });
 }
