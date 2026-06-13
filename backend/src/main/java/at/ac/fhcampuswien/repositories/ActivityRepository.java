@@ -247,6 +247,18 @@ public class ActivityRepository {
         }
     }
 
+    public void updateWeather(UUID id, String weather) {
+        String sql = "UPDATE activities SET weather = ? WHERE id = ?";
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, weather);
+            pstmt.setString(2, id.toString());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new DatabaseException("Error updating weather", e);
+        }
+    }
+
     public int countParticipants(UUID activityId) {
         String sql = "SELECT COUNT(*) FROM activity_participants WHERE activity_id = ?";
 

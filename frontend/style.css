@@ -243,10 +243,16 @@ h2, h3, h4 {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.5rem;
+    
+    padding-bottom: 1rem; /* space between text and the line */
+    margin-bottom: 1rem;  /* space betwenn the line and the following meta information */
+    border-bottom: 1px solid var(--brand); /* A beatiful line */
 }
 
-.activity-header h4 { margin: 0; }
+.activity-header h4 { 
+    margin: 0;
+    font-size: 1.4rem;
+}
 
 .badge {
     background-color: var(--brand-light);
@@ -269,6 +275,13 @@ h2, h3, h4 {
     border-top: 1px solid var(--border-color);
     padding-top: 1rem;
     flex-wrap: wrap;
+}
+
+.activity-weather {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
 }
 
 .activity-actions .btn {

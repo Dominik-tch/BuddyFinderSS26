@@ -81,4 +81,15 @@ public class ActivityService {
         return activities.findAll().stream().anyMatch(a -> a.equals(activity));
     }
 
+    public Activity getActivityById(UUID id) {
+        Activity activity = activities.getActivityById(id);
+        if (activity == null) {
+            throw new ActivityNotFoundException("Activity not found.");
+        }
+        return activity;
+    }
+
+    public void updateWeather(UUID id, String weather) {
+        activities.updateWeather(id, weather);
+    }
 }

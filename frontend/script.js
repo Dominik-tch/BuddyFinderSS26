@@ -196,7 +196,7 @@ function renderActivities(activities) {
         
         headerDiv.append(titleH4, ownerSpan);
 
-        // 3. Build Meta Info (Location/Map, Price, Limit)
+        // Meta Info (Location/Map, Price, Limit)
         const metaDiv = document.createElement('div');
         metaDiv.className = "activity-meta";
 
@@ -217,17 +217,26 @@ function renderActivities(activities) {
         detailsSpan.textContent = `  |  💰 ${act.price}€  |  👥 Limit: ${act.currentParticipants}/${act.userLimit} Participants`;
         metaDiv.appendChild(detailsSpan);
 
-        // 4. Build Weather
+        // Weather
         const weatherDiv = document.createElement('div');
         weatherDiv.className = "activity-weather";
-        weatherDiv.textContent = `🌤️ Weather: ${act.weather || 'No weather data available'}`;
 
-        // 5. Build Description
+        const weatherText = document.createElement('span');
+        weatherText.textContent = `🌤️ Weather: ${act.weather || 'No data'} `;
+        // Weather update button
+        const updateWeatherBtn = document.createElement('button');
+        updateWeatherBtn.className = "btn btn-secondary";
+        updateWeatherBtn.textContent = "🔄 Update";
+        updateWeatherBtn.onclick = () => patchWeather(act.id, updateWeatherBtn, weatherText);
+
+        weatherDiv.append(weatherText, updateWeatherBtn);
+
+        //  Description
         const descP = document.createElement('p');
         descP.className = "activity-desc";
         descP.textContent = act.description || 'No description';
 
-        // 6. Build Participants List
+        // Participants List
         const participantsP = document.createElement('p');
         participantsP.className = "participants-list";
         participantsP.textContent = "Participants: ";
@@ -474,5 +483,27 @@ async function submitEditActivity(event) {
         console.log("Open user:", userId);
         // later:
         // show profile
+    }
+}
+
+async function patchWeather(id, buttonElement, textElement) {
+    buttonElement.disabled = true;
+    buttonElement.textContent = "⏳...";
+
+    try {
+        const data = await apiFetch(`/activities/weather/${id}`, {
+            method: 'PATCH'
+        });
+        
+        // Update the text directly from the API response
+        if (data.weather) {
+            textElement.textContent = `🌤️ Weather: ${data.weather}`;
+        }
+        showAlert('Weather updated successfully!');
+    } catch (error) {
+        console.error("Patch Weather Error", error);
+    } finally {
+        buttonElement.disabled = false;
+        buttonElement.textContent = "🔄 Update";
     }
 }
