@@ -23,7 +23,6 @@ function checkAuthStatus() {
     }
 }
 
-// Upgraded to handle a specific mode if requested (e.g., clicking a back arrow)
 function toggleAuthMode(forceLogin = false) {
     if (forceLogin) {
         isLoginMode = true;
@@ -39,7 +38,6 @@ function toggleAuthMode(forceLogin = false) {
     document.getElementById('auth-btn-text').textContent = isLoginMode ? 'Login' : 'Create Account';
     document.getElementById('auth-toggle-link').textContent = isLoginMode ? "Don't have an account yet? Register here." : "Already have an account? Login here.";
 
-    // Toggle fields, required attributes, and back arrow visibility
     if (isLoginMode) {
         regFields.classList.add('hidden');
         if (backArrow) backArrow.classList.add('hidden');
@@ -60,7 +58,6 @@ function updateTabUI(filterType) {
     document.getElementById(`tab-${filterType}`).classList.add('active');
 }
 
-// --- AUTH API ---
 async function handleAuth(event) {
     event.preventDefault();
     const endpoint = isLoginMode ? '/users/login' : '/users/register';
@@ -110,7 +107,6 @@ async function logout(callApi = true) {
     showAlert('Successfully logged out.');
 }
 
-// --- ACTIVITY API ---
 async function loadActivities(filterType) {
     currentFilter = filterType;
     updateTabUI(filterType);
@@ -141,13 +137,13 @@ function renderActivities(activities) {
     }
 
     activities.forEach(act => {
-        // 1. Create the main card container
+        // Create the main card container
         const card = document.createElement('div');
         card.className = "activity-card";
 
         const contentDiv = document.createElement('div');
 
-        // 2. Build the Header (Title & Owner)
+        // Header (Title & Owner)
         const headerDiv = document.createElement('div');
         headerDiv.className = "activity-header";
 
@@ -201,13 +197,13 @@ function renderActivities(activities) {
         descP.textContent = act.description || 'No description';
 
         // Participants List
-        const participantsP = document.createElement('div'); // Changed from 'p' to 'div'
+        const participantsP = document.createElement('div');
         participantsP.className = "participants-list";
         participantsP.textContent = "Participants: ";
 
         if (act.participants && act.participants.length > 0) {
             act.participants.forEach((user, index) => {
-                const userSpan = document.createElement('div'); // Changed from 'span' to 'div'
+                const userSpan = document.createElement('div');
                 userSpan.className = "participant-link";
                 userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
                 userSpan.textContent = user.userName;
@@ -231,8 +227,6 @@ function renderActivities(activities) {
                         if (token) {
                             headers['Authorization'] = `Bearer ${token}`;
                         }
-
-                        // If your openUser function uses a different URL route, match it here
                         const response = await fetch(`${BASE_URL}/users/profile?id=${user.id}`, { headers });
 
                         if (response.ok) {
@@ -267,7 +261,7 @@ function renderActivities(activities) {
         // Combine all content parts
         contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
 
-        // 7. Build Action Buttons
+        // Action Buttons
         const actionsDiv = document.createElement('div');
         actionsDiv.className = "activity-actions";
 
