@@ -51,6 +51,10 @@ public class User {
         return lastName;
     }
 
+    public void setFirstName(String firstName) {this.firstName = firstName;}
+    public void setLastName(String lastName) {this.lastName = lastName;}
+    public void setEmail(String email) {this.email = email;}
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;

@@ -88,4 +88,23 @@ public class UserRepository {
             throw new DatabaseException("Error fetching user by id", e);
         }
     }
+
+    public void update(User user) {
+        String sql = "UPDATE users SET email = ?, first_name = ?, last_name = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, user.getEmail());
+            pstmt.setString(2, user.getFirstName());
+            pstmt.setString(3, user.getLastName());
+            pstmt.setString(4, user.getId().toString());
+
+            pstmt.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DatabaseException("Error updating user in database", e);
+        }
+    }
 }

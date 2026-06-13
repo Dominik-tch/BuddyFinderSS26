@@ -41,6 +41,13 @@ public class UserService {
         userRepository.add(userToSave);
     }
 
+    public void updateUser(User userToUpdate) {
+        if (userToUpdate.getEmail() == null || !userToUpdate.getEmail().contains("@")) {
+            throw new IllegalArgumentException("A valid email is required.");
+        }
+        userRepository.update(userToUpdate);
+    }
+
     public User authenticateUser(String username, String plainTextPassword) {
         if (username == null || plainTextPassword == null) {
             return null;

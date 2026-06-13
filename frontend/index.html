@@ -12,7 +12,10 @@
     <nav class="navbar">
         <div class="nav-container">
             <h1 class="logo">🔍 BuddyFinder</h1>
-            <div id="nav-auth-buttons">
+            <!-- Added display flex and gap so the buttons sit nicely next to each other -->
+            <div id="nav-auth-buttons" style="display: flex; gap: 10px;">
+                <!-- NEW: Profile Button -->
+                <button onclick="window.location.href='profile.html'" id="btn-profile" class="btn btn-secondary hidden">My Profile</button>
                 <button onclick="logout()" id="btn-logout" class="btn btn-danger hidden">Logout</button>
             </div>
         </div>
@@ -145,26 +148,24 @@
 
             <!-- List of Activities -->
             <h3 id="list-title" class="section-title">Activities</h3>
-            <div id="activities-container" class="grid-container">
-                <!-- Activities are inserted here via JS -->
+            
+            <div class="card search-bar" style="margin-bottom: 1.5rem;">
+            <input type="text" id="search-title" placeholder="Search Title">
+            <input type="text" id="search-location" placeholder="Location">
+            <input type="number" id="search-price" placeholder="Max Price">
+            <button onclick="searchActivities()" class="btn btn-primary">Search</button>
             </div>
 
-            <div class="card search-bar" style="margin-bottom: 1.5rem;">
-
-            <input type="text" id="search-title" placeholder="Search Title">
-
-            <input type="text" id="search-location" placeholder="Location">
-
-            <input type="number" id="search-price" placeholder="Max Price">
-
-            <button onclick="searchActivities()" class="btn btn-primary">Search</button>
-
+            <div id="activities-container" class="grid-container">
+                <!-- Activities are inserted here via JS -->
             </div>
 
         </section>
 
     </main>
 
+    <!-- LOAD UTILS FIRST, THEN SCRIPT -->
+    <script src="utils.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

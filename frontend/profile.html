@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - BuddyFinder</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">🔍 BuddyFinder</h1>
+            <div id="nav-auth-buttons">
+                <button onclick="window.location.href='index.html'" class="btn btn-secondary">Back to Dashboard</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div id="alert-box" class="alert hidden"></div>
+
+        <section class="auth-section card">
+            <h2>My Profile</h2>
+            
+            <form id="profile-form" onsubmit="handleProfileUpdate(event)">
+                <div class="form-group">
+                    <label for="prof-username">Username (Read Only)</label>
+                    <input type="text" id="prof-username" disabled style="background-color: #f3f4f6;">
+                </div>
+                <div class="form-group">
+                    <label for="prof-email">Email Address</label>
+                    <input type="email" id="prof-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="prof-firstName">First Name</label>
+                    <input type="text" id="prof-firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="prof-lastName">Last Name</label>
+                    <input type="text" id="prof-lastName" required>
+                </div>
+
+                <button type="submit" id="prof-save-btn" class="btn btn-primary w-full" style="margin-top: 1rem;">
+                    Save Changes
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <script src="utils.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>
