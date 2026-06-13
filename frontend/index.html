@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuddyFinder</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- Navigation -->
@@ -15,7 +17,8 @@
             <!-- Added display flex and gap so the buttons sit nicely next to each other -->
             <div id="nav-auth-buttons" style="display: flex; gap: 10px;">
                 <!-- NEW: Profile Button -->
-                <button onclick="window.location.href='profile.html'" id="btn-profile" class="btn btn-secondary hidden">My Profile</button>
+                <button onclick="window.location.href='profile.html'" id="btn-profile"
+                    class="btn btn-secondary hidden">My Profile</button>
                 <button onclick="logout()" id="btn-logout" class="btn btn-danger hidden">Logout</button>
             </div>
         </div>
@@ -23,14 +26,14 @@
 
     <!-- Main Content -->
     <main class="container">
-        
+
         <!-- Error messages / Notifications -->
         <div id="alert-box" class="alert hidden"></div>
 
         <!-- AUTHENTICATION (Login / Registration) -->
         <section id="view-auth" class="auth-section card">
             <h2 id="auth-title">Login</h2>
-            
+
             <form id="auth-form" onsubmit="handleAuth(event)">
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -40,7 +43,7 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" required>
                 </div>
-                
+
                 <!-- Additional fields for registration (Hidden by default) -->
                 <div id="register-fields" class="hidden">
                     <div class="form-group">
@@ -63,18 +66,22 @@
             </form>
 
             <div class="auth-toggle">
-                <a href="#" onclick="toggleAuthMode()" id="auth-toggle-link">Don't have an account yet? Register here.</a>
+                <a href="#" onclick="toggleAuthMode()" id="auth-toggle-link">Don't have an account yet? Register
+                    here.</a>
             </div>
         </section>
 
         <!-- DASHBOARD (Activities) -->
         <section id="view-dashboard" class="hidden">
-            
+
             <!-- Dashboard Navigation -->
             <div class="tabs">
-                <button onclick="loadActivities('getAll')" id="tab-getAll" class="tab-btn active">All Activities</button>
-                <button onclick="loadActivities('getAllOwned')" id="tab-getAllOwned" class="tab-btn">My Created Activities</button>
-                <button onclick="loadActivities('getAllJoined')" id="tab-getAllJoined" class="tab-btn">Joined Activities</button>
+                <button onclick="loadActivities('getAll')" id="tab-getAll" class="tab-btn active">All
+                    Activities</button>
+                <button onclick="loadActivities('getAllOwned')" id="tab-getAllOwned" class="tab-btn">My Created
+                    Activities</button>
+                <button onclick="loadActivities('getAllJoined')" id="tab-getAllJoined" class="tab-btn">Joined
+                    Activities</button>
             </div>
 
             <!-- Add Activity -->
@@ -101,6 +108,14 @@
                         <label for="act-limit">Participant Limit</label>
                         <input type="number" id="act-limit" min="1" required>
                     </div>
+                    <div class="form-group">
+                        <label for="act-date">Date</label>
+                        <input type="date" id="act-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="act-time">Time</label>
+                        <input type="time" id="act-time" required>
+                    </div>
                     <div style="width: 100%; text-align: right; margin-top: 10px;">
                         <button type="submit" class="btn btn-primary">Create Activity</button>
                     </div>
@@ -108,56 +123,67 @@
             </div>
 
             <div id="edit-activity-box" class="add-activity card border-brand hidden">
-            <h3>Edit Activity</h3>
-            <form id="edit-activity-form" onsubmit="submitEditActivity(event)">
+                <h3>Edit Activity</h3>
+                <form id="edit-activity-form" onsubmit="submitEditActivity(event)">
 
-            <input type="hidden" id="edit-id">
+                    <input type="hidden" id="edit-id">
 
-            <div class="form-group">
-                <label>Title</label>
-                <input type="text" id="edit-title" required>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="edit-title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="edit-description" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="edit-location" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" id="edit-price" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Participant Limit</label>
+                        <input type="number" id="edit-limit" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="act-date">Date</label>
+                        <input type="date" id="edit-date" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="act-time">Time</label>
+                        <input type="time" id="edit-time" required>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:1rem;">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" onclick="closeEditBox()" class="btn btn-secondary">Cancel</button>
+
+                    </div>
+                </form>
             </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <input type="text" id="edit-description" required>
-            </div>
-
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" id="edit-location" required>
-            </div>
-
-            <div class="form-group">
-                <label>Price</label>
-                <input type="number" id="edit-price" required>
-            </div>
-
-            <div class="form-group">
-                <label>Participant Limit</label>
-                <input type="number" id="edit-limit" required>
-            </div>
-
-            <div style="display:flex; gap:10px; margin-top:1rem;">
-                <button type="submit" class="btn btn-primary">Save</button>
-                <button type="button" onclick="closeEditBox()" class="btn btn-secondary">Cancel</button>
-
-        </div>
-    </form>
-</div>
 
             <!-- List of Activities -->
             <h3 id="list-title" class="section-title">Activities</h3>
-            
+
+
             <div class="card search-bar" style="margin-bottom: 1.5rem;">
-            <input type="text" id="search-title" placeholder="Search Title">
-            <input type="text" id="search-location" placeholder="Location">
-            <input type="number" id="search-price" placeholder="Max Price">
-            <button onclick="searchActivities()" class="btn btn-primary">Search</button>
+                <input type="text" id="search-title" placeholder="Search Title">
+                <input type="text" id="search-location" placeholder="Location">
+                <input type="number" id="search-price" placeholder="Max Price">
+
+                <button type="button" onclick="searchActivities()" class="btn btn-primary">Search</button>
             </div>
 
             <div id="activities-container" class="grid-container">
-                <!-- Activities are inserted here via JS -->
             </div>
 
         </section>
@@ -168,4 +194,5 @@
     <script src="utils.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
