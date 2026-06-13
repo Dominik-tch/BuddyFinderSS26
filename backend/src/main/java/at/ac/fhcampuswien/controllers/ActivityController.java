@@ -37,7 +37,7 @@ public class ActivityController implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
             exchange.sendResponseHeaders(204, -1); // 204 No Content
@@ -61,6 +61,8 @@ public class ActivityController implements HttpHandler {
                 routingPath = BASE + "update";
             } else if (path.startsWith(BASE + "leave/")) {
                 routingPath = BASE + "leave";
+            } else if (path.startsWith(BASE + "weather/")) {
+                routingPath = BASE + "weather";
             }
 
             // Route based on the NORMALIZED path
@@ -75,6 +77,7 @@ public class ActivityController implements HttpHandler {
                 case BASE + "search" -> handleSearchRequest(method, exchange);
                 case BASE + "update" -> handleUpdateRequest(method, exchange);
                 case BASE + "leave" -> handleLeaveRequest(method, exchange);
+                case BASE + "weather" -> handlePatchWeatherRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -324,6 +327,33 @@ public class ActivityController implements HttpHandler {
                 String response = "{ \"error\": \"Method not allowed\" }";
 
                 ApiUtils.sendResponse(exchange, 405, response);
+            }
+        }
+    }
+
+    private void handlePatchWeatherRequest(String method, HttpExchange exchange) throws IOException {
+        switch (method) {
+            case "PATCH" -> {
+                getAuthenticatedUserId(exchange); // Validate auth
+
+                String path = exchange.getRequestURI().getPath();
+                String[] segments = path.split("/");
+                String idString = segments[segments.length - 1];
+                UUID id = UUID.fromString(idString);
+
+                Activity activity = activityService.getActivityById(id);
+                // get new weather info
+                fetchAndSetWeather(activity);
+                // Save the newly fetched weather back to the database
+                activityService.updateWeather(id, activity.getWeather());
+
+                // Respond with the new weather so the UI can update instantly
+                String response = "{ \"message\": \"Weather updated successfully\", \"weather\": \"" + activity.getWeather() + "\" }";
+                ApiUtils.sendResponse(exchange, 200, response);
+            }
+
+            default -> {
+                ApiUtils.sendResponse(exchange, 405, "{ \"error\": \"Method not allowed\" }");
             }
         }
     }
