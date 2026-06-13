@@ -1,9 +1,9 @@
 // --- CONFIGURATION ---
-const BASE_URL = 'http://localhost:8081/api'; // Make sure the port is correct!
+const BASE_URL = 'http://localhost:8081/api';
 
 // --- STATE ---
 let isLoginMode = true;
-let currentFilter = 'getAll'; 
+let currentFilter = 'getAll';
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,7 +16,7 @@ function showAlert(message, isError = false) {
     alertBox.textContent = message;
     alertBox.className = 'alert ' + (isError ? 'alert-error' : 'alert-success');
     alertBox.classList.remove('hidden');
-    
+
     setTimeout(() => { alertBox.classList.add('hidden'); }, 4000);
 }
 
@@ -68,23 +68,32 @@ function checkAuthStatus() {
     }
 }
 
-function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
+// Upgraded to handle a specific mode if requested (e.g., clicking a back arrow)
+function toggleAuthMode(forceLogin = false) {
+    if (forceLogin) {
+        isLoginMode = true;
+    } else {
+        isLoginMode = !isLoginMode;
+    }
+
     const regFields = document.getElementById('register-fields');
-    
+    const backArrow = document.getElementById('auth-back-arrow'); // Optional back arrow element
+
     // Update UI texts
     document.getElementById('auth-title').textContent = isLoginMode ? 'Login' : 'Register';
     document.getElementById('auth-btn-text').textContent = isLoginMode ? 'Login' : 'Create Account';
     document.getElementById('auth-toggle-link').textContent = isLoginMode ? "Don't have an account yet? Register here." : "Already have an account? Login here.";
-    
-    // Toggle fields and required attribute
+
+    // Toggle fields, required attributes, and back arrow visibility
     if (isLoginMode) {
         regFields.classList.add('hidden');
+        if (backArrow) backArrow.classList.add('hidden');
         document.getElementById('email').required = false;
         document.getElementById('firstName').required = false;
         document.getElementById('lastName').required = false;
     } else {
         regFields.classList.remove('hidden');
+        if (backArrow) backArrow.classList.remove('hidden');
         document.getElementById('email').required = true;
         document.getElementById('firstName').required = true;
         document.getElementById('lastName').required = true;
@@ -100,7 +109,7 @@ function updateTabUI(filterType) {
 async function handleAuth(event) {
     event.preventDefault();
     const endpoint = isLoginMode ? '/users/login' : '/users/register';
-    
+
     // Basic payload
     let payload = {
         userName: document.getElementById('username').value,
@@ -126,7 +135,7 @@ async function handleAuth(event) {
             checkAuthStatus();
         } else if (!isLoginMode) {
             showAlert('Successfully registered! Please log in now.');
-            toggleAuthMode();
+            toggleAuthMode(true); // Force back to login mode after successful registration
             // Clear form for a clean login
             document.getElementById('auth-form').reset();
         }
@@ -152,8 +161,8 @@ async function loadActivities(filterType) {
     updateTabUI(filterType);
 
     let title = "All Activities";
-    if(filterType === 'getAllOwned') title = "My Created Activities";
-    if(filterType === 'getAllJoined') title = "My Joined Activities";
+    if (filterType === 'getAllOwned') title = "My Created Activities";
+    if (filterType === 'getAllJoined') title = "My Joined Activities";
     document.getElementById('list-title').textContent = title;
 
     const container = document.getElementById('activities-container');
@@ -180,20 +189,20 @@ function renderActivities(activities) {
         // 1. Create the main card container
         const card = document.createElement('div');
         card.className = "activity-card";
-        
+
         const contentDiv = document.createElement('div');
 
         // 2. Build the Header (Title & Owner)
         const headerDiv = document.createElement('div');
         headerDiv.className = "activity-header";
-        
+
         const titleH4 = document.createElement('h4');
         titleH4.textContent = act.title || 'Untitled';
-        
+
         const ownerSpan = document.createElement('span');
         ownerSpan.className = "badge";
         ownerSpan.textContent = `Created by: ${act.owner || 'Unknown'}`;
-        
+
         headerDiv.append(titleH4, ownerSpan);
 
         // Meta Info (Location/Map, Price, Limit)
@@ -240,7 +249,7 @@ function renderActivities(activities) {
         const participantsP = document.createElement('p');
         participantsP.className = "participants-list";
         participantsP.textContent = "Participants: ";
-        
+
         if (act.participants && act.participants.length > 0) {
             act.participants.forEach((user, index) => {
                 const userSpan = document.createElement('span');
@@ -250,45 +259,45 @@ function renderActivities(activities) {
                 userSpan.onclick = () => openUser(user.id);
 
 
-                        const popupDiv = document.createElement('div');
-                        popupDiv.className = "profile-popup";
-                        popupDiv.innerHTML = `
+                const popupDiv = document.createElement('div');
+                popupDiv.className = "profile-popup";
+                popupDiv.innerHTML = `
                             <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
                             <p><strong>Username:</strong> ${user.userName}</p>
                             <p class="popup-loading" style="font-style: italic;">Loading profile...</p>
                         `;
-                        userSpan.appendChild(popupDiv);
+                userSpan.appendChild(popupDiv);
 
-                        userSpan.onmouseenter = async () => {
-                                    if (popupDiv.dataset.loaded === "true") return;
-                                    try {
-                                        // Automatically look for a standard auth token
-                                        const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-                                        const headers = {};
-                                        if (token) {
-                                            headers['Authorization'] = `Bearer ${token}`;
-                                        }
+                userSpan.onmouseenter = async () => {
+                    if (popupDiv.dataset.loaded === "true") return;
+                    try {
+                        // Automatically look for a standard auth token
+                        const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+                        const headers = {};
+                        if (token) {
+                            headers['Authorization'] = `Bearer ${token}`;
+                        }
 
-                                        // If your openUser function uses a different URL route, match it here
-                                        const response = await fetch(`${BASE_URL}/users/profile?id=${user.id}`, { headers });
+                        // If your openUser function uses a different URL route, match it here
+                        const response = await fetch(`${BASE_URL}/users/profile?id=${user.id}`, { headers });
 
-                                        if (response.ok) {
-                                            const userData = await response.json();
-                                            popupDiv.innerHTML = `
+                        if (response.ok) {
+                            const userData = await response.json();
+                            popupDiv.innerHTML = `
                                                 <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
                                                 <p><strong>Username:</strong> ${userData.userName || userData.username || user.userName}</p>
                                                 <p><strong>Name:</strong> ${userData.firstName || '-'} ${userData.lastName || '-'}</p>
                                                 <p><strong>Email:</strong> ${userData.email || '-'}</p>
                                             `;
-                                            popupDiv.dataset.loaded = "true";
-                                        } else {
-                                            throw new Error();
-                                        }
-                                    } catch (err) {
-                                        const loadingText = popupDiv.querySelector('.popup-loading');
-                                        if (loadingText) loadingText.textContent = "Details temporarily unavailable";
-                                    }
-                                };
+                            popupDiv.dataset.loaded = "true";
+                        } else {
+                            throw new Error();
+                        }
+                    } catch (err) {
+                        const loadingText = popupDiv.querySelector('.popup-loading');
+                        if (loadingText) loadingText.textContent = "Details temporarily unavailable";
+                    }
+                };
 
 
 
@@ -320,7 +329,7 @@ function renderActivities(activities) {
             const joinBtn = document.createElement('button');
             joinBtn.className = "btn btn-secondary";
             joinBtn.textContent = "Join";
-            joinBtn.onclick = function() { joinActivity(act.id, this); };
+            joinBtn.onclick = function () { joinActivity(act.id, this); };
             actionsDiv.appendChild(joinBtn);
         }
 
@@ -346,8 +355,7 @@ function renderActivities(activities) {
 
 async function handleAddActivity(event) {
     event.preventDefault();
-    
-    // Read data and ensure correct data types (int for Price and Limit)
+
     const payload = {
         title: document.getElementById('act-title').value,
         description: document.getElementById('act-desc').value,
@@ -359,7 +367,7 @@ async function handleAddActivity(event) {
     try {
         await apiFetch('/activities/add', {
             method: 'POST',
-            body: JSON.stringify(payload) 
+            body: JSON.stringify(payload)
         });
         showAlert('Activity successfully created!');
         document.getElementById('add-activity-form').reset();
@@ -398,8 +406,8 @@ async function leaveActivity(id) {
 }
 
 async function deleteActivity(id) {
-    if(!confirm('Are you sure you want to delete this activity?')) return;
-    
+    if (!confirm('Are you sure you want to delete this activity?')) return;
+
     try {
         await apiFetch(`/activities/delete/${id}`, { method: 'DELETE' });
         showAlert('Activity deleted.');
@@ -417,16 +425,16 @@ async function searchActivities() {
 
     let query = [];
 
-    if(title) query.push(`title=${encodeURIComponent(title)}`);
-    if(location) query.push(`location=${encodeURIComponent(location)}`);
-    if(maxPrice) query.push(`maxPrice=${maxPrice}`);
+    if (title) query.push(`title=${encodeURIComponent(title)}`);
+    if (location) query.push(`location=${encodeURIComponent(location)}`);
+    if (maxPrice) query.push(`maxPrice=${maxPrice}`);
 
     const url = `/activities/search?${query.join("&")}`;
 
     try {
         const data = await apiFetch(url);
         renderActivities(data);
-    } catch(error) {
+    } catch (error) {
         console.error(error);
     }
 }
@@ -522,12 +530,10 @@ async function submitEditActivity(event) {
     } catch (error) {
         console.error(error);
     }
+}
 
-    function openUser(userId) {
-        console.log("Open user:", userId);
-        // later:
-        // show profile
-    }
+function openUser(userId) {
+    console.log("Open user:", userId);
 }
 
 async function patchWeather(id, buttonElement, textElement) {
@@ -538,7 +544,7 @@ async function patchWeather(id, buttonElement, textElement) {
         const data = await apiFetch(`/activities/weather/${id}`, {
             method: 'PATCH'
         });
-        
+
         // Update the text directly from the API response
         if (data.weather) {
             textElement.textContent = `🌤️ Weather: ${data.weather}`;

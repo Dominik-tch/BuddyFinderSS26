@@ -161,7 +161,7 @@ public class ActivityController implements HttpHandler {
         }
     }
 
-   private void handleAddRequest(String method, HttpExchange exchange) throws IOException {
+    private void handleAddRequest(String method, HttpExchange exchange) throws IOException {
         // Handle POST for /api/activities/add
         switch (method) {
             case "POST" -> {
@@ -177,9 +177,10 @@ public class ActivityController implements HttpHandler {
                 UUID userUUID = UUID.fromString(userId);
                 activity.setOwner(userService.getUserById(userUUID).getUserName());
 
-                //use the apis for location and weather
+                //use the apis for location, weather, and translation
                 fetchAndSetCoordinates(activity);
                 fetchAndSetWeather(activity);
+                fetchAndSetTranslation(activity);
 
                 //Check if activity already exists
                 if (activityService.exists(activity)) {
@@ -293,9 +294,12 @@ public class ActivityController implements HttpHandler {
             UUID id = UUID.fromString(idString);
             InputStream is = exchange.getRequestBody();
             Activity updatedActivity = getActivityFromHttpInputStream(is);
-            //use the apis for location and weather
+            
+            //use the apis for location, weather, and translation
             fetchAndSetCoordinates(updatedActivity);
             fetchAndSetWeather(updatedActivity);
+            fetchAndSetTranslation(updatedActivity);
+            
             activityService.updateActivity(id, updatedActivity);
             String response =
                 "{ \"message\": \"Activity updated successfully\" }";
@@ -466,6 +470,48 @@ public class ActivityController implements HttpHandler {
             System.out.println("Warning: Network error calling Open-Meteo - " + e.getMessage());
         } catch (com.google.gson.JsonSyntaxException | IllegalStateException e) {
             System.out.println("Warning: Failed to parse Weather data - " + e.getMessage());
+        }
+    }
+
+    // Translation API
+    private void fetchAndSetTranslation(Activity activity) {
+        String originalTitle = activity.getTitle();
+        if (originalTitle == null || originalTitle.isBlank()) {
+            return;
+        }
+
+        try {
+            String encodedTitle = java.net.URLEncoder.encode(originalTitle, java.nio.charset.StandardCharsets.UTF_8);
+            
+            String translateUrl = "https://api.mymemory.translated.net/get?q=" + encodedTitle + "&langpair=Autodetect%7Cen";
+            HttpClient client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .build();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(translateUrl))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            com.google.gson.JsonObject jsonResponse = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
+            
+            if (jsonResponse.has("responseData")) {
+                String translatedText = jsonResponse.getAsJsonObject("responseData").get("translatedText").getAsString();
+                
+                // Ensure it doesn't append empty string, exact same text, or the API error message
+                if (translatedText != null 
+                    && !translatedText.trim().isEmpty() 
+                    && !translatedText.equalsIgnoreCase(originalTitle)
+                    && !translatedText.contains("PLEASE SELECT TWO")) {
+                    
+                    activity.setTitle(originalTitle + " (EN: " + translatedText + ")");
+                    System.out.println("MILESTONE 9: Translation successfully fetched: " + translatedText);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Warning: Translation API failed - " + e.getMessage());
         }
     }
 

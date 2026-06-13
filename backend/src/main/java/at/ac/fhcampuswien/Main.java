@@ -12,17 +12,13 @@ public class Main {
     private final static int SERVER_PORT = 8081;
 
     public static void main(String[] args) throws IOException {
-        // Create an HTTP server listening on defined port
         HttpServer server = HttpServer.create(new InetSocketAddress(SERVER_PORT), 0);
 
-        // Register controllers and their handlers - REST endpoints
         registerController(server, "/api/activities", new ActivityController());
         registerController(server, "/api/users", new UserController());
 
-        //Initialize Database
         DatabaseUtil.initializeDatabase();
 
-        // Start the server
         server.setExecutor(null);
         server.start();
         System.out.printf("Server is running on http://localhost:%d", SERVER_PORT);
@@ -30,6 +26,5 @@ public class Main {
 
     private static void registerController(HttpServer server, String path, HttpHandler handler) {
         HttpContext context = server.createContext(path, handler);
-        // Optionally add more configurations to context if needed
     }
 }
