@@ -4,6 +4,7 @@ import at.ac.fhcampuswien.DatabaseUtil;
 import at.ac.fhcampuswien.exceptions.ActivityNotFoundException;
 import at.ac.fhcampuswien.exceptions.DatabaseException;
 import at.ac.fhcampuswien.models.Activity;
+import at.ac.fhcampuswien.models.User;
 import at.ac.fhcampuswien.models.UserPreview;
 
 import java.sql.Connection;
@@ -154,6 +155,22 @@ public class ActivityRepository {
             pstmt.setString(10, activity.getWeather());
 
             pstmt.executeUpdate();
+
+            try {
+                UserRepository userRepo = new UserRepository();
+                User user = userRepo.findByUsername(activity.getOwner());
+                UUID userUuid = null;
+                if (user != null) {
+                    userUuid = user.getId();
+                } else {
+                    userUuid = UUID.fromString(activity.getOwner());
+                }
+                if (userUuid != null) {
+                    joinActivity(userUuid, activity.getId());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         } catch (SQLException e) {
             throw new DatabaseException("Error adding activity to database", e);

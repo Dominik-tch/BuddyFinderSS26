@@ -239,6 +239,50 @@ function renderActivities(activities) {
                 userSpan.textContent = user.userName;
                 // Add click listener safely
                 userSpan.onclick = () => openUser(user.id);
+
+
+                        const popupDiv = document.createElement('div');
+                        popupDiv.className = "profile-popup";
+                        popupDiv.innerHTML = `
+                            <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
+                            <p><strong>Username:</strong> ${user.userName}</p>
+                            <p class="popup-loading" style="font-style: italic;">Loading profile...</p>
+                        `;
+                        userSpan.appendChild(popupDiv);
+
+                        userSpan.onmouseenter = async () => {
+                                    if (popupDiv.dataset.loaded === "true") return;
+                                    try {
+                                        // Automatically look for a standard auth token
+                                        const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+                                        const headers = {};
+                                        if (token) {
+                                            headers['Authorization'] = `Bearer ${token}`;
+                                        }
+
+                                        // If your openUser function uses a different URL route, match it here
+                                        const response = await fetch(`${BASE_URL}/users/profile?id=${user.id}`, { headers });
+
+                                        if (response.ok) {
+                                            const userData = await response.json();
+                                            popupDiv.innerHTML = `
+                                                <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
+                                                <p><strong>Username:</strong> ${userData.userName || userData.username || user.userName}</p>
+                                                <p><strong>Name:</strong> ${userData.firstName || '-'} ${userData.lastName || '-'}</p>
+                                                <p><strong>Email:</strong> ${userData.email || '-'}</p>
+                                            `;
+                                            popupDiv.dataset.loaded = "true";
+                                        } else {
+                                            throw new Error();
+                                        }
+                                    } catch (err) {
+                                        const loadingText = popupDiv.querySelector('.popup-loading');
+                                        if (loadingText) loadingText.textContent = "Details temporarily unavailable";
+                                    }
+                                };
+
+
+
                 participantsP.appendChild(userSpan);
 
                 // Add commas between names

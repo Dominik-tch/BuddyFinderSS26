@@ -300,8 +300,47 @@ h2, h3, h4 {
     color: var(--brand);
     cursor: pointer;
     font-weight: 600;
+    position: relative;
+    display: inline-block;
 }
 
 .participant-link:hover {
     text-decoration: underline;
+}
+
+.profile-popup {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Sits directly below the participant's name */
+    left: 0;   /* Aligns with the left edge of the name */
+    background-color: var(--white);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-top: 4px solid var(--brand); /* Clean green accent bar */
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: var(--shadow-md);
+    z-index: 100; /* Ensures it floats over other elements */
+    width: 240px;
+    text-align: left;
+    font-weight: normal;
+    margin-top: 6px;
+    text-decoration: none !important; /* Prevents the text inside from being underlined */
+}
+
+/* Displays the popup when hovering over the participant link OR the popup itself */
+.participant-link:hover .profile-popup {
+    display: block;
+}
+
+.profile-popup strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-color);
+}
+
+.profile-popup p {
+    margin: 0.4rem 0;
+    font-size: 0.85rem;
+    color: var(--text-light);
 }

@@ -44,6 +44,7 @@ public class UserController implements HttpHandler {
                 case BASE + "register" -> handleRegisterRequest(method, exchange);
                 case BASE + "login" -> handleLoginRequest(method, exchange);
                 case BASE + "logout" -> handleLogoutRequest(method, exchange);
+                case BASE + "profile" -> handleProfileRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -149,6 +150,34 @@ public class UserController implements HttpHandler {
                 String response = "{ \"error\": \"Method not allowed\" }";
                 ApiUtils.sendResponse(exchange, 405, response);
             }
+        }
+    }
+
+    private void handleProfileRequest(String method, HttpExchange exchange) throws IOException {
+        if ("GET".equalsIgnoreCase(method)) {
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null && query.startsWith("id=")) {
+                String idStr = query.substring(3);
+                try {
+                    at.ac.fhcampuswien.repositories.UserRepository userRepo = new at.ac.fhcampuswien.repositories.UserRepository();
+                    User user = userRepo.findById(java.util.UUID.fromString(idStr));
+                    if (user != null) {
+                        String response = "{" +
+                                "\"userName\":\"" + user.getUserName() + "\"," +
+                                "\"firstName\":\"" + (user.getFirstName() != null ? user.getFirstName() : "-") + "\"," +
+                                "\"lastName\":\"" + (user.getLastName() != null ? user.getLastName() : "-") + "\"," +
+                                "\"email\":\"" + (user.getEmail() != null ? user.getEmail() : "-") + "\"" +
+                                "}";
+                        ApiUtils.sendResponse(exchange, 200, response);
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            ApiUtils.sendResponse(exchange, 404, "{\"error\": \"User not found\"}");
+        } else {
+            ApiUtils.sendResponse(exchange, 405, "{\"error\": \"Method not allowed\"}");
         }
     }
 
