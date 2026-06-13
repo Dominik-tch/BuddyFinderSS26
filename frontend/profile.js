@@ -15,7 +15,7 @@ async function loadProfile() {
 
     try {
         // Fetch the profile data
-        const userData = await apiFetch('/users/profile');
+        const userData = await apiFetch('/users/editProfile');
         
         // Populate the form
         document.getElementById('prof-username').value = userData.userName || '';
@@ -46,7 +46,7 @@ async function handleProfileUpdate(event) {
 
     try {
         // Update the profile data
-        await apiFetch('/users/profile', {
+        await apiFetch('/users/editProfile', {
             method: 'PUT',
             body: JSON.stringify(payload)
         });

@@ -184,7 +184,6 @@ function renderActivities(activities) {
         // Weather
         const weatherDiv = document.createElement('div');
         weatherDiv.className = "activity-weather";
-        weatherDiv.textContent = `🌤️ Weather: ${act.weather || 'No weather data available'}`;
 
         const weatherText = document.createElement('span');
         weatherText.textContent = `🌤️ Weather: ${act.weather || 'No data'} `;
@@ -462,4 +461,5 @@ async function patchWeather(id, buttonElement, textElement) {
     } finally {
         buttonElement.disabled = false;
         buttonElement.textContent = "🔄 Update";
+    }
 }
