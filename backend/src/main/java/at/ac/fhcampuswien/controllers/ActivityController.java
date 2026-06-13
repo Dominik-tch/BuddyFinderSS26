@@ -170,9 +170,12 @@ public class ActivityController implements HttpHandler {
                 String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
-
+                if (activity.getUserLimit() <= 1) {
+                    throw new IllegalArgumentException("The Limit must be at least 2");
+                }
                 //add the current userName as owner by the userID
-                activity.setOwner(userService.getUserById(UUID.fromString(userId)).getUserName());
+                UUID userUUID = UUID.fromString(userId);
+                activity.setOwner(userService.getUserById(userUUID).getUserName());
 
                 //use the apis for location and weather
                 fetchAndSetCoordinates(activity);
@@ -183,7 +186,7 @@ public class ActivityController implements HttpHandler {
                     throw new IllegalStateException("Activity already exists");
                 }
 
-                activityService.addActivity(activity);
+                activityService.addActivity(activity, userUUID);
                 response = "{ \"message\": \"Activity added successfully\" }";
                 ApiUtils.sendResponse(exchange, 201, response);
             }

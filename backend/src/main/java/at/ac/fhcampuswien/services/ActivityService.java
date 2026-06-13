@@ -2,6 +2,7 @@ package at.ac.fhcampuswien.services;
 
 import at.ac.fhcampuswien.exceptions.ActivityNotFoundException;
 import at.ac.fhcampuswien.models.Activity;
+import at.ac.fhcampuswien.models.User;
 import at.ac.fhcampuswien.repositories.ActivityRepository;
 
 import java.util.List;
@@ -57,8 +58,10 @@ public class ActivityService {
         activities.joinActivity(userId, activityId);
     }
 
-    public void addActivity(Activity activity) {
+    public void addActivity(Activity activity, UUID owner) {
         activities.add(activity);
+
+        activities.joinActivity(owner, activity.getId());
     }
     public void deleteActivity(UUID id) {
         activities.deleteById(id);
