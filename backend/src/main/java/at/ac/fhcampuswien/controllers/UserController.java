@@ -47,6 +47,7 @@ public class UserController implements HttpHandler {
                 case BASE + "logout" -> handleLogoutRequest(method, exchange);
                 case BASE + "profile" -> handleProfileRequest(method, exchange);
                 case BASE + "editProfile" -> handleEditProfileRequest(method, exchange);
+                case BASE + "deleteAccount" -> handleDeleteAccountRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -231,6 +232,38 @@ public class UserController implements HttpHandler {
         } catch (Exception e) {
             e.printStackTrace();
             ApiUtils.sendResponse(exchange, 500, "{\"error\": \"An error occurred while processing the profile.\"}");
+        }
+    }
+
+    private void handleDeleteAccountRequest(String method, HttpExchange exchange) throws IOException {
+        try {
+            // Verify token and get the user's ID
+            String userIdString = getAuthenticatedUserId(exchange);
+            UUID userId = UUID.fromString(userIdString);
+
+            switch (method) {
+                case "DELETE" -> {
+                    // Delete the user from the database
+                    userService.deleteUser(userId);
+
+                    // Invalidate the current session
+                    String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                        String token = authHeader.substring(7);
+                        sessionService.invalidateSession(token);
+                    }
+
+                    ApiUtils.sendResponse(exchange, 200, "{ \"message\": \"Account deleted successfully.\" }");
+                }
+                default -> {
+                    ApiUtils.sendResponse(exchange, 405, "{ \"error\": \"Method not allowed\" }");
+                }
+            }
+        } catch (SecurityException e) {
+            ApiUtils.sendResponse(exchange, 401, "{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiUtils.sendResponse(exchange, 500, "{\"error\": \"An error occurred while deleting the account.\"}");
         }
     }
 

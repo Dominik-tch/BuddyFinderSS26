@@ -94,4 +94,13 @@ public class UserService {
             throw new RuntimeException("Error hashing password", e);
         }
     }
+
+    public void deleteUser(UUID id) {
+        User existingUser = userRepository.findById(id);
+        if (existingUser == null) {
+            throw new IllegalArgumentException("User not found.");
+        }
+
+        userRepository.deleteById(id);
+    }
 }

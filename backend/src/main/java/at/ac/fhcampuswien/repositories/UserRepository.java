@@ -107,4 +107,23 @@ public class UserRepository {
             throw new DatabaseException("Error updating user in database", e);
         }
     }
+
+    public void deleteById(UUID id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try (Connection conn = DatabaseUtil.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, id.toString());
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new DatabaseException("Deleting user failed, no rows affected.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new DatabaseException("Error deleting user from database", e);
+        }
+    }
 }

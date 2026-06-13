@@ -59,3 +59,29 @@ async function handleProfileUpdate(event) {
         saveBtn.textContent = "Save Changes";
     }
 }
+
+async function handleDeleteAccount() {
+    // Double-check with the user
+    const confirmed = confirm("Are you ABSOLUTELY sure you want to delete your account? This action cannot be undone.");
+    
+    if (!confirmed) {
+        return; // User canceled
+    }
+
+    try {
+        await apiFetch('/users/deleteAccount', {
+            method: 'DELETE'
+        });
+
+        // Clear the session token from localStorage
+        localStorage.removeItem('sessionToken');
+        
+        // Alert the user and redirect back to the login page
+        alert("Your account has been successfully deleted.");
+        window.location.href = 'index.html';
+
+    } catch (error) {
+        console.error("Failed to delete account", error);
+        showAlert("Failed to delete account: " + error.message);
+    }
+}
