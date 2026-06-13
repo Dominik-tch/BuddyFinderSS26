@@ -10,6 +10,7 @@ import at.ac.fhcampuswien.repositories.UserRepository;
 import at.ac.fhcampuswien.services.ActivityService;
 import at.ac.fhcampuswien.services.SessionService;
 import at.ac.fhcampuswien.services.UserService;
+import at.ac.fhcampuswien.ResponseFormatter;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.sun.net.httpserver.HttpExchange;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import java.net.URI;
@@ -78,128 +80,99 @@ public class ActivityController implements HttpHandler {
                 case BASE + "update" -> handleUpdateRequest(method, exchange);
                 case BASE + "leave" -> handleLeaveRequest(method, exchange);
                 case BASE + "weather" -> handlePatchWeatherRequest(method, exchange);
-                default -> {
-                    // Path not found
-                    String response = "{ \"error\": \"Path not found\" }";
-                    ApiUtils.sendResponse(exchange, 404, response);
-                }
+                default -> ResponseFormatter.send(exchange, 404, Map.of("error", "Path not found"));
             }
         } catch (ActivityNotFoundException e) {
-            ApiUtils.sendResponse(exchange, 404, "{\"error\": \"" + e.getMessage() + "\"}");
+            ResponseFormatter.send(exchange, 404, Map.of("error", e.getMessage()));
         } catch (SecurityException e) {
-            ApiUtils.sendResponse(exchange, 401, "{\"error\": \"" + e.getMessage() + "\"}");
+            ResponseFormatter.send(exchange, 401, Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
-            ApiUtils.sendResponse(exchange, 400, "{\"error\": \"" + e.getMessage() + "\"}");
+            ResponseFormatter.send(exchange, 400, Map.of("error", e.getMessage()));
         } catch (JsonSyntaxException e) {
-            ApiUtils.sendResponse(exchange, 400, "{\"error\": \"Malformed JSON syntax in request body.\"}");
+            ResponseFormatter.send(exchange, 400, Map.of("error", "Malformed JSON syntax in request body."));
         } catch (IllegalStateException e) {
-            ApiUtils.sendResponse(exchange, 409, "{\"error\": \"" + e.getMessage() + "\"}");
+            ResponseFormatter.send(exchange, 409, Map.of("error", e.getMessage()));
         } catch (DatabaseException e) {
-            ApiUtils.sendResponse(exchange, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+            ResponseFormatter.send(exchange, 500, Map.of("error", e.getMessage()));
             e.getCause().printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
-            ApiUtils.sendResponse(exchange, 500, "{\"error\": \"An unexpected error occurred.\"}");
+            ResponseFormatter.send(exchange, 500, Map.of("error", "An unexpected error occurred."));
         }
     }
 
     private void handleBaseRequest(String method, HttpExchange exchange) throws IOException {
         switch (method) {
-            case "GET" -> {
-                String response = "{ \"message\": \"Base endpoint in /api/activities/!\" }";
-                ApiUtils.sendResponse(exchange, 200, response);
-            }
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            case "GET" -> ResponseFormatter.send(exchange, 200, Map.of("message", "Base endpoint in /api/activities/!"));
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleGetAllOwnedRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle GET for /api/activities/getAllOwned
         switch (method) {
             case "GET" -> {
                 String userId = getAuthenticatedUserId(exchange);
                 String userName = userService.getUserById(UUID.fromString(userId)).getUserName();
-                String response = activityToJson(activityService.getAllOwnedActivities(userName));
-                ApiUtils.sendResponse(exchange, 200, response);
+                List<Activity> activities = activityService.getAllOwnedActivities(userName);
+                ResponseFormatter.send(exchange, 200, activities);
             }
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleGetAllJoinedRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle GET for /api/activities/getAllJoined
         switch (method) {
             case "GET" -> {
                 String userId = getAuthenticatedUserId(exchange);
-                String response = activityToJson(activityService.getAllJoinedActivities(userId));
-                ApiUtils.sendResponse(exchange, 200, response);
+                List<Activity> activities = activityService.getAllJoinedActivities(userId);
+                ResponseFormatter.send(exchange, 200, activities);
             }
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleGetAllRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle GET for /api/activities/getAll
         switch (method) {
             case "GET" -> {
-                String response = activityToJson(activityService.getAllActivities());
-                ApiUtils.sendResponse(exchange, 200, response);
+                List<Activity> activities = activityService.getAllActivities();
+                ResponseFormatter.send(exchange, 200, activities);
             }
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleAddRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle POST for /api/activities/add
         switch (method) {
             case "POST" -> {
                 String userId = getAuthenticatedUserId(exchange);
-
-                String response;
                 InputStream is = exchange.getRequestBody();
                 Activity activity = getActivityFromHttpInputStream(is);
+
                 if (activity.getUserLimit() <= 1) {
                     throw new IllegalArgumentException("The Limit must be at least 2");
                 }
-                //add the current userName as owner by the userID
+
                 UUID userUUID = UUID.fromString(userId);
                 activity.setOwner(userService.getUserById(userUUID).getUserName());
 
-                //use the apis for location, weather, and translation
+                // use the apis for location, weather, and translation
                 fetchAndSetCoordinates(activity);
                 fetchAndSetWeather(activity);
                 fetchAndSetTranslation(activity);
 
-                //Check if activity already exists
+                // Check if activity already exists
                 if (activityService.exists(activity)) {
                     throw new IllegalStateException("Activity already exists");
                 }
 
                 activityService.addActivity(activity, userUUID);
-                response = "{ \"message\": \"Activity added successfully\" }";
-                ApiUtils.sendResponse(exchange, 201, response);
+                ResponseFormatter.send(exchange, 201, Map.of("message", "Activity added successfully"));
             }
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleDeleteRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle DELETE for /api/activities/delete/{String ID}
         switch (method) {
             case "DELETE" -> {
                 getAuthenticatedUserId(exchange);
@@ -207,20 +180,15 @@ public class ActivityController implements HttpHandler {
                 String[] segments = path.split("/");
                 String idString = segments[segments.length - 1];
                 UUID id = UUID.fromString(idString);
-                activityService.deleteActivity(id);
-                String response = "{ \"message\": \"Activity deleted successfully\" }";
-                ApiUtils.sendResponse(exchange, 200, response);
-            }
 
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
+                activityService.deleteActivity(id);
+                ResponseFormatter.send(exchange, 200, Map.of("message", "Activity deleted successfully"));
             }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handljoinRequest(String method, HttpExchange exchange) throws IOException {
-        // Handle POST for /api/activities/join/{String ID}
         switch (method) {
             case "POST" -> {
                 String userId = getAuthenticatedUserId(exchange);
@@ -230,33 +198,24 @@ public class ActivityController implements HttpHandler {
 
                 UUID activityId = UUID.fromString(idString);
                 activityService.joinActivity(UUID.fromString(userId), activityId);
-                String response = "{ \"message\": \"Joined activity successfully\" }";
-                ApiUtils.sendResponse(exchange, 200, response);
+                ResponseFormatter.send(exchange, 200, Map.of("message", "Joined activity successfully"));
             }
-
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
+
     private void handleSearchRequest(String method, HttpExchange exchange) throws IOException {
-    // Handle GET for /api/activities/search/
         switch (method) {
             case "GET" -> {
-
                 String query = exchange.getRequestURI().getQuery();
-
                 String title = null;
                 String location = null;
                 Integer maxPrice = null;
 
                 if (query != null) {
                     String[] params = query.split("&");
-
                     for (String param : params) {
                         String[] pair = param.split("=");
-
                         if (pair.length == 2) {
                             switch (pair[0]) {
                                 case "title" -> title = pair[1];
@@ -267,55 +226,38 @@ public class ActivityController implements HttpHandler {
                     }
                 }
 
-                List<Activity> activities =
-                        activityService.searchActivities(title, location, maxPrice);
-
-                String response = activityToJson(activities);
-
-                ApiUtils.sendResponse(exchange, 200, response);
+                List<Activity> activities = activityService.searchActivities(title, location, maxPrice);
+                ResponseFormatter.send(exchange, 200, activities);
             }
-
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleUpdateRequest(String method, HttpExchange exchange) throws IOException {
-
         switch (method) {
             case "PUT" -> {
-            getAuthenticatedUserId(exchange);
-            String path = exchange.getRequestURI().getPath();
-            String[] segments = path.split("/");
-            String idString = segments[segments.length - 1];
+                getAuthenticatedUserId(exchange);
+                String path = exchange.getRequestURI().getPath();
+                String[] segments = path.split("/");
+                String idString = segments[segments.length - 1];
 
-            UUID id = UUID.fromString(idString);
-            InputStream is = exchange.getRequestBody();
-            Activity updatedActivity = getActivityFromHttpInputStream(is);
-            
-            //use the apis for location, weather, and translation
-            fetchAndSetCoordinates(updatedActivity);
-            fetchAndSetWeather(updatedActivity);
-            fetchAndSetTranslation(updatedActivity);
-            
-            activityService.updateActivity(id, updatedActivity);
-            String response =
-                "{ \"message\": \"Activity updated successfully\" }";
-            ApiUtils.sendResponse(exchange, 200, response);
-        }
+                UUID id = UUID.fromString(idString);
+                InputStream is = exchange.getRequestBody();
+                Activity updatedActivity = getActivityFromHttpInputStream(is);
 
-            default -> {
-                String response =
-                    "{ \"error\": \"Method not allowed\" }";
-                ApiUtils.sendResponse(exchange, 405, response);
+                // use the apis for location, weather, and translation
+                fetchAndSetCoordinates(updatedActivity);
+                fetchAndSetWeather(updatedActivity);
+                fetchAndSetTranslation(updatedActivity);
+
+                activityService.updateActivity(id, updatedActivity);
+                ResponseFormatter.send(exchange, 200, Map.of("message", "Activity updated successfully"));
             }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
     private void handleLeaveRequest(String method, HttpExchange exchange) throws IOException {
-
         switch (method) {
             case "DELETE" -> {
                 String userId = getAuthenticatedUserId(exchange);
@@ -323,18 +265,11 @@ public class ActivityController implements HttpHandler {
                 String[] segments = path.split("/");
                 String idString = segments[segments.length - 1];
                 UUID activityId = UUID.fromString(idString);
+
                 activityService.leaveActivity(UUID.fromString(userId), activityId);
-
-                String response = "{ \"message\": \"Left activity successfully\" }";
-
-                ApiUtils.sendResponse(exchange, 200, response);
+                ResponseFormatter.send(exchange, 200, Map.of("message", "Left activity successfully"));
             }
-
-            default -> {
-                String response = "{ \"error\": \"Method not allowed\" }";
-
-                ApiUtils.sendResponse(exchange, 405, response);
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
@@ -355,13 +290,12 @@ public class ActivityController implements HttpHandler {
                 activityService.updateWeather(id, activity.getWeather());
 
                 // Respond with the new weather so the UI can update instantly
-                String response = "{ \"message\": \"Weather updated successfully\", \"weather\": \"" + activity.getWeather() + "\" }";
-                ApiUtils.sendResponse(exchange, 200, response);
+                ResponseFormatter.send(exchange, 200, Map.of(
+                        "message", "Weather updated successfully",
+                        "weather", activity.getWeather()
+                ));
             }
-
-            default -> {
-                ApiUtils.sendResponse(exchange, 405, "{ \"error\": \"Method not allowed\" }");
-            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
     }
 
@@ -481,7 +415,7 @@ public class ActivityController implements HttpHandler {
 
         try {
             String encodedTitle = java.net.URLEncoder.encode(originalTitle, java.nio.charset.StandardCharsets.UTF_8);
-            
+
             String translateUrl = "https://api.mymemory.translated.net/get?q=" + encodedTitle + "&langpair=Autodetect%7Cen";
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(5))
@@ -495,16 +429,16 @@ public class ActivityController implements HttpHandler {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             com.google.gson.JsonObject jsonResponse = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
-            
+
             if (jsonResponse.has("responseData")) {
                 String translatedText = jsonResponse.getAsJsonObject("responseData").get("translatedText").getAsString();
-                
+
                 // Ensure it doesn't append empty string, exact same text, or the API error message
-                if (translatedText != null 
-                    && !translatedText.trim().isEmpty() 
-                    && !translatedText.equalsIgnoreCase(originalTitle)
-                    && !translatedText.contains("PLEASE SELECT TWO")) {
-                    
+                if (translatedText != null
+                        && !translatedText.trim().isEmpty()
+                        && !translatedText.equalsIgnoreCase(originalTitle)
+                        && !translatedText.contains("PLEASE SELECT TWO")) {
+
                     activity.setTitle(originalTitle + " (EN: " + translatedText + ")");
                     System.out.println("MILESTONE 9: Translation successfully fetched: " + translatedText);
                 }
@@ -533,10 +467,7 @@ public class ActivityController implements HttpHandler {
         Gson gson = new Gson();
         return gson.fromJson(body, Activity.class);
     }
-    private String activityToJson(List<Activity> activityList) {
-        Gson gson = new Gson();
-        return gson.toJson(activityList);
-    }
+
     private String getAuthenticatedUserId(HttpExchange exchange) {
         String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
