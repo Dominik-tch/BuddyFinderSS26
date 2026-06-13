@@ -201,17 +201,17 @@ function renderActivities(activities) {
         descP.textContent = act.description || 'No description';
 
         // Participants List
-        const participantsP = document.createElement('p');
+        const participantsP = document.createElement('div'); // Changed from 'p' to 'div'
         participantsP.className = "participants-list";
         participantsP.textContent = "Participants: ";
 
         if (act.participants && act.participants.length > 0) {
             act.participants.forEach((user, index) => {
-                const userSpan = document.createElement('span');
+                const userSpan = document.createElement('div'); // Changed from 'span' to 'div'
                 userSpan.className = "participant-link";
+                userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
                 userSpan.textContent = user.userName;
                 userSpan.onclick = () => openUser(user.id);
-
 
                 const popupDiv = document.createElement('div');
                 popupDiv.className = "profile-popup";
@@ -252,8 +252,6 @@ function renderActivities(activities) {
                         if (loadingText) loadingText.textContent = "Details temporarily unavailable";
                     }
                 };
-
-
 
                 participantsP.appendChild(userSpan);
 
