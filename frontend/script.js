@@ -386,6 +386,7 @@ async function joinActivity(id, button) {
             method: 'POST'
         });
         showAlert('Successfully joined!');
+        await loadActivities(currentFilter);
     } catch (error) {
         button.disabled = false;
         button.textContent = "Join";
