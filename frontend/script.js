@@ -1,6 +1,3 @@
-// --- CONFIGURATION ---
-const BASE_URL = 'http://localhost:8081/api'; // Make sure the port is correct!
-
 // --- STATE ---
 let isLoginMode = true;
 let currentFilter = 'getAll'; 
@@ -10,61 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
 });
 
-// --- UTILS ---
-function showAlert(message, isError = false) {
-    const alertBox = document.getElementById('alert-box');
-    alertBox.textContent = message;
-    alertBox.className = 'alert ' + (isError ? 'alert-error' : 'alert-success');
-    alertBox.classList.remove('hidden');
-    
-    setTimeout(() => { alertBox.classList.add('hidden'); }, 4000);
-}
-
-function getToken() {
-    return localStorage.getItem('sessionToken');
-}
-
-async function apiFetch(endpoint, options = {}) {
-    const token = getToken();
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            ...options,
-            headers
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            if (response.status === 401) logout(false);
-            throw new Error(data.error || 'An error occurred');
-        }
-        return data;
-    } catch (error) {
-        showAlert(error.message, true);
-        throw error;
-    }
-}
-
 // --- UI LOGIC ---
 function checkAuthStatus() {
     if (getToken()) {
         document.getElementById('view-auth').classList.add('hidden');
         document.getElementById('view-dashboard').classList.remove('hidden');
         document.getElementById('btn-logout').classList.remove('hidden');
+        document.getElementById('btn-profile').classList.remove('hidden'); // Show profile button
         loadActivities('getAll');
     } else {
         document.getElementById('view-auth').classList.remove('hidden');
         document.getElementById('view-dashboard').classList.add('hidden');
         document.getElementById('btn-logout').classList.add('hidden');
+        document.getElementById('btn-profile').classList.add('hidden'); // Hide profile button
     }
 }
 
@@ -220,7 +175,7 @@ function renderActivities(activities) {
         // 4. Build Weather
         const weatherDiv = document.createElement('div');
         weatherDiv.className = "activity-weather";
-        weatherDiv.textContent = `🌤️ Weather: ${act.weather || 'No weather data available'}`;
+        weatherDiv.textContent = `Weather: ${act.weather || 'No weather data available'}`;
 
         // 5. Build Description
         const descP = document.createElement('p');
@@ -237,7 +192,7 @@ function renderActivities(activities) {
                 const userSpan = document.createElement('span');
                 userSpan.className = "participant-link";
                 userSpan.textContent = user.userName;
-                // Add click listener safely
+                // Safely opening the user profile (can be connected later)
                 userSpan.onclick = () => openUser(user.id);
                 participantsP.appendChild(userSpan);
 
@@ -317,7 +272,6 @@ async function handleAddActivity(event) {
 }
 
 async function joinActivity(id, button) {
-
     button.disabled = true;
     button.textContent = "Joined";
     try {
@@ -357,7 +311,6 @@ async function deleteActivity(id) {
 }
 
 async function searchActivities() {
-
     const title = document.getElementById('search-title').value;
     const location = document.getElementById('search-location').value;
     const maxPrice = document.getElementById('search-price').value;
@@ -378,53 +331,7 @@ async function searchActivities() {
     }
 }
 
-async function editActivity(id) {
-
-    const title =
-        prompt("New Title:");
-
-    const location =
-        prompt("New Location:");
-
-    const price =
-        prompt("New Price:");
-
-    const description =
-        prompt("New Description:");
-
-    const userLimit =
-        prompt("New Participant Limit:");
-
-    if (!title || !location) return;
-
-    const payload = {
-        title,
-        location,
-        price: parseInt(price),
-        description,
-        userLimit: parseInt(userLimit)
-    };
-
-    try {
-
-        await apiFetch(`/activities/update/${id}`, {
-            method: 'PUT',
-            body: JSON.stringify(payload)
-        });
-
-        showAlert("Activity updated!");
-
-        loadActivities(currentFilter);
-
-    } catch (error) {
-
-        console.error(error);
-
-    }
-}
-
 function openEditBox(act) {
-
     document
         .getElementById('edit-activity-box')
         .classList.remove('hidden');
@@ -438,14 +345,12 @@ function openEditBox(act) {
 }
 
 function closeEditBox() {
-
     document
         .getElementById('edit-activity-box')
         .classList.add('hidden');
 }
 
 async function submitEditActivity(event) {
-
     event.preventDefault();
 
     const id = document.getElementById('edit-id').value;
@@ -469,10 +374,9 @@ async function submitEditActivity(event) {
     } catch (error) {
         console.error(error);
     }
+}
 
-    function openUser(userId) {
-        console.log("Open user:", userId);
-        // later:
-        // show profile
-    }
+function openUser(userId) {
+    console.log("Open user:", userId);
+    // later: show profile
 }
