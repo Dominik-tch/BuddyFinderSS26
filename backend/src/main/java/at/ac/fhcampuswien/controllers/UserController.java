@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.UUID;
 
 public class UserController implements HttpHandler {
     private final UserService userService = new UserService(new UserRepository());
@@ -44,6 +45,7 @@ public class UserController implements HttpHandler {
                 case BASE + "register" -> handleRegisterRequest(method, exchange);
                 case BASE + "login" -> handleLoginRequest(method, exchange);
                 case BASE + "logout" -> handleLogoutRequest(method, exchange);
+                case BASE + "profile" -> handleProfileRequest(method, exchange);
                 default -> {
                     // Path not found
                     String response = "{ \"error\": \"Path not found\" }";
@@ -152,6 +154,52 @@ public class UserController implements HttpHandler {
         }
     }
 
+    private void handleProfileRequest(String method, HttpExchange exchange) throws IOException {
+        try {
+            // Verify token and get the user's ID
+            String userIdString = getAuthenticatedUserId(exchange);
+            UUID userId = UUID.fromString(userIdString);
+
+            switch (method) {
+                case "GET" -> {
+                    User user = userService.getUserById(userId);
+
+                    // Build JSON manually to ensure we NEVER send the password hash to the frontend
+                    String response = String.format(
+                            "{\"userName\":\"%s\", \"email\":\"%s\", \"firstName\":\"%s\", \"lastName\":\"%s\"}",
+                            user.getUserName(),
+                            user.getEmail() != null ? user.getEmail() : "",
+                            user.getFirstName() != null ? user.getFirstName() : "",
+                            user.getLastName() != null ? user.getLastName() : ""
+                    );
+
+                    ApiUtils.sendResponse(exchange, 200, response);
+                }
+                case "PUT" -> {
+                    InputStream is = exchange.getRequestBody();
+                    User updatedData = getUserFromHttpInputStream(is);
+
+                    User existingUser = userService.getUserById(userId);
+
+                    existingUser.setEmail(updatedData.getEmail());
+                    existingUser.setFirstName(updatedData.getFirstName());
+                    existingUser.setLastName(updatedData.getLastName());
+
+                    userService.updateUser(existingUser);
+
+                    ApiUtils.sendResponse(exchange, 200, "{ \"message\": \"Profile updated successfully\" }");
+                }
+                default -> {
+                    ApiUtils.sendResponse(exchange, 405, "{ \"error\": \"Method not allowed\" }");
+                }
+            }
+        } catch (SecurityException e) {
+            ApiUtils.sendResponse(exchange, 401, "{\"error\": \"" + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ApiUtils.sendResponse(exchange, 500, "{\"error\": \"An error occurred while processing the profile.\"}");
+        }
+    }
 
     private User getUserFromHttpInputStream(InputStream is) throws IOException {
         String body = new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -165,4 +213,19 @@ public class UserController implements HttpHandler {
         Gson gson = new Gson();
         return gson.fromJson(body, User.class);
     }
+
+    private String getAuthenticatedUserId(HttpExchange exchange) {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            String userId = sessionService.validateTokenAndGetUserId(token);
+
+            if (userId != null) {
+                return userId;
+            }
+        }
+        throw new SecurityException("Unauthorized. Please log in.");
+    }
+
 }
