@@ -226,6 +226,11 @@ function renderActivities(activities) {
         detailsSpan.textContent = `  |  💰 ${act.price}€  |  👥 Limit: ${act.currentParticipants}/${act.userLimit} Participants`;
         metaDiv.appendChild(detailsSpan);
 
+        const dateTimeSpan = document.createElement('span');
+        dateTimeSpan.style.display = "block"; // Makes it sit on its own line if you prefer
+        dateTimeSpan.textContent = ` 🗓️ Date: ${act.activityDate || 'N/A'} | ⏰ Time: ${act.activityTime || 'N/A'}`;
+        metaDiv.appendChild(dateTimeSpan);
+
         // Weather
         const weatherDiv = document.createElement('div');
         weatherDiv.className = "activity-weather";
@@ -361,7 +366,9 @@ async function handleAddActivity(event) {
         description: document.getElementById('act-desc').value,
         location: document.getElementById('act-location').value,
         price: parseInt(document.getElementById('act-price').value),
-        userLimit: parseInt(document.getElementById('act-limit').value)
+        userLimit: parseInt(document.getElementById('act-limit').value),
+        activityDate: document.getElementById('act-date').value,
+        activityTime: document.getElementById('act-time').value
     };
 
     try {
@@ -517,7 +524,9 @@ async function submitEditActivity(event) {
         description: document.getElementById('edit-description').value,
         location: document.getElementById('edit-location').value,
         price: parseInt(document.getElementById('edit-price').value),
-        userLimit: parseInt(document.getElementById('edit-limit').value)
+        userLimit: parseInt(document.getElementById('edit-limit').value),
+        activityDate: document.getElementById('edit-date').value,
+        activityTime: document.getElementById('edit-time').value
     };
 
     try {

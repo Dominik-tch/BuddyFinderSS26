@@ -22,8 +22,8 @@ public class ActivityRepository {
         String sql = "SELECT * FROM activities";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 Activity activity = new Activity(
@@ -33,8 +33,9 @@ public class ActivityRepository {
                         rs.getString("location"),
                         rs.getInt("user_limit"),
                         rs.getString("description"),
-                        UUID.fromString(rs.getString("id"))
-                );
+                        UUID.fromString(rs.getString("id")),
+                        rs.getString("activityDate"),
+                        rs.getString("activityTime"));
                 activity.setLatitude(rs.getString("latitude"));
                 activity.setLongitude(rs.getString("longitude"));
                 activity.setWeather(rs.getString("weather"));
@@ -42,8 +43,7 @@ public class ActivityRepository {
                 activity.setCurrentParticipants(countParticipants(activity.getId()));
                 activities.add(activity);
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Error getting activities from database", e);
         }
 
@@ -56,7 +56,7 @@ public class ActivityRepository {
         String sql = "SELECT * FROM activities WHERE owner = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, owner);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -68,8 +68,9 @@ public class ActivityRepository {
                             rs.getString("location"),
                             rs.getInt("user_limit"),
                             rs.getString("description"),
-                            UUID.fromString(rs.getString("id"))
-                    );
+                            UUID.fromString(rs.getString("id")),
+                            rs.getString("activityDate"), // Added
+                            rs.getString("activityTime"));
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
                     activity.setWeather(rs.getString("weather"));
@@ -78,8 +79,7 @@ public class ActivityRepository {
                     activities.add(activity);
                 }
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new DatabaseException("Error getting activities from database", e);
         }
 
@@ -93,7 +93,7 @@ public class ActivityRepository {
                 "WHERE ap.user_id = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId.toString());
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -105,8 +105,9 @@ public class ActivityRepository {
                             rs.getString("location"),
                             rs.getInt("user_limit"),
                             rs.getString("description"),
-                            UUID.fromString(rs.getString("id"))
-                    );
+                            UUID.fromString(rs.getString("id")),
+                            rs.getString("activityDate"), // Added
+                            rs.getString("activityTime"));
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
                     activity.setWeather(rs.getString("weather"));
@@ -126,7 +127,7 @@ public class ActivityRepository {
         String sql = "INSERT INTO activity_participants (user_id, activity_id) VALUES (?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId.toString());
             pstmt.setString(2, activityId.toString());
@@ -138,10 +139,10 @@ public class ActivityRepository {
     }
 
     public void add(Activity activity) {
-        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description, latitude, longitude, weather) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activities (id, title, owner, price, location, user_limit, description, latitude, longitude, weather, activityDate, activityTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, activity.getId().toString());
             pstmt.setString(2, activity.getTitle());
@@ -153,6 +154,8 @@ public class ActivityRepository {
             pstmt.setString(8, activity.getLatitude());
             pstmt.setString(9, activity.getLongitude());
             pstmt.setString(10, activity.getWeather());
+            pstmt.setString(11, activity.getActivityDate());
+            pstmt.setString(12, activity.getActivityTime());
 
             pstmt.executeUpdate();
 
@@ -165,7 +168,7 @@ public class ActivityRepository {
         String sql = "DELETE FROM activities WHERE id = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, id.toString());
             int deletedActivities = pstmt.executeUpdate();
@@ -182,7 +185,7 @@ public class ActivityRepository {
         String sql = "SELECT * FROM activities WHERE id = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, id.toString());
 
@@ -195,8 +198,9 @@ public class ActivityRepository {
                             rs.getString("location"),
                             rs.getInt("user_limit"),
                             rs.getString("description"),
-                            UUID.fromString(rs.getString("id"))
-                    );
+                            UUID.fromString(rs.getString("id")),
+                            rs.getString("activityDate"), // Added
+                            rs.getString("activityTime"));
                     activity.setLatitude(rs.getString("latitude"));
                     activity.setLongitude(rs.getString("longitude"));
                     activity.setWeather(rs.getString("weather"));
@@ -213,23 +217,22 @@ public class ActivityRepository {
     public void update(UUID id, Activity updatedActivity) {
 
         String sql = """
-            UPDATE activities
-            SET
-            title = ?,
-            location = ?,
-            price = ?,
-            description = ?,
-            user_limit = ?,
-            latitude = ?,
-            longitude = ?,
-            weather = ? 
-            WHERE id = ?
-        """;
+                    UPDATE activities
+                    SET
+                    title = ?,
+                    location = ?,
+                    price = ?,
+                    description = ?,
+                    user_limit = ?,
+                    latitude = ?,
+                    longitude = ?,
+                    weather = ?
+                    WHERE id = ?
+                """;
 
         try (
                 Connection conn = DatabaseUtil.getConnection();
-                PreparedStatement pstmt = conn.prepareStatement(sql)
-        ) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, updatedActivity.getTitle());
             pstmt.setString(2, updatedActivity.getLocation());
@@ -251,7 +254,7 @@ public class ActivityRepository {
     public void updateWeather(UUID id, String weather) {
         String sql = "UPDATE activities SET weather = ? WHERE id = ?";
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, weather);
             pstmt.setString(2, id.toString());
             pstmt.executeUpdate();
@@ -264,7 +267,7 @@ public class ActivityRepository {
         String sql = "SELECT COUNT(*) FROM activity_participants WHERE activity_id = ?";
 
         try (Connection conn = DatabaseUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, activityId.toString());
 
@@ -285,8 +288,7 @@ public class ActivityRepository {
         List<Activity> activities = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(
-            "SELECT * FROM activities WHERE 1=1"
-        );
+                "SELECT * FROM activities WHERE 1=1");
 
         List<Object> parameters = new ArrayList<>();
 
@@ -306,9 +308,8 @@ public class ActivityRepository {
         }
 
         try (
-            Connection conn = DatabaseUtil.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql.toString())
-        )   {
+                Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
             for (int i = 0; i < parameters.size(); i++) {
                 pstmt.setObject(i + 1, parameters.get(i));
@@ -325,8 +326,9 @@ public class ActivityRepository {
                         rs.getString("location"),
                         rs.getInt("user_limit"),
                         rs.getString("description"),
-                        UUID.fromString(rs.getString("id"))
-                );
+                        UUID.fromString(rs.getString("id")),
+                        rs.getString("activityDate"), // Added
+                        rs.getString("activityTime"));
                 activity.setLatitude(rs.getString("latitude"));
                 activity.setLongitude(rs.getString("longitude"));
                 activity.setWeather(rs.getString("weather"));
@@ -345,14 +347,13 @@ public class ActivityRepository {
     public void leaveActivity(UUID userId, UUID activityId) {
 
         String sql = """
-            DELETE FROM activity_participants
-            WHERE user_id = ? AND activity_id = ?
-        """;
+                    DELETE FROM activity_participants
+                    WHERE user_id = ? AND activity_id = ?
+                """;
 
         try (
-            Connection conn = DatabaseUtil.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)
-        ) {
+                Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, userId.toString());
             pstmt.setString(2, activityId.toString());
@@ -367,26 +368,25 @@ public class ActivityRepository {
     public boolean isUserJoined(UUID userId, UUID activityId) {
 
         String sql = """
-            SELECT COUNT(*) 
-            FROM activity_participants
-            WHERE user_id = ? AND activity_id = ?
-        """;
+                    SELECT COUNT(*)
+                    FROM activity_participants
+                    WHERE user_id = ? AND activity_id = ?
+                """;
 
         try (
-            Connection conn = DatabaseUtil.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)
-        ) {
+                Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        pstmt.setString(1, userId.toString());
-        pstmt.setString(2, activityId.toString());
+            pstmt.setString(1, userId.toString());
+            pstmt.setString(2, activityId.toString());
 
-        ResultSet rs = pstmt.executeQuery();
+            ResultSet rs = pstmt.executeQuery();
 
-        if (rs.next()) {
-            return rs.getInt(1) > 0;
-        }
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
 
-        return false;
+            return false;
 
         } catch (SQLException e) {
             throw new DatabaseException("Error checking joined activity", e);
@@ -398,23 +398,21 @@ public class ActivityRepository {
         List<UserPreview> participants = new ArrayList<>();
 
         String sql = """
-            SELECT u.id, u.username
-            FROM users u
-            INNER JOIN activity_participants ap
-            ON u.id = ap.user_id
-            WHERE ap.activity_id = ?
-        """;
+                    SELECT u.id, u.username
+                    FROM users u
+                    INNER JOIN activity_participants ap
+                    ON u.id = ap.user_id
+                    WHERE ap.activity_id = ?
+                """;
 
         try (
-            Connection conn = DatabaseUtil.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)
-        ) {
+                Connection conn = DatabaseUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, activityId.toString());
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                UserPreview user = new UserPreview(UUID.fromString(rs.getString("id")), rs.getString("username")
-            );
+                UserPreview user = new UserPreview(UUID.fromString(rs.getString("id")), rs.getString("username"));
                 participants.add(user);
             }
         } catch (SQLException e) {
