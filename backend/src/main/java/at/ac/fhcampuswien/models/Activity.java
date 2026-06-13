@@ -89,6 +89,10 @@ public class Activity {
         this.currentParticipants = currentParticipants;
     }
 
+    public void setTitle(String title) {
+    this.title = title;
+}
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;

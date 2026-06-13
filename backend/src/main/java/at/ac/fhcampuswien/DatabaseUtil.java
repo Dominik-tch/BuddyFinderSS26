@@ -59,6 +59,9 @@ public class DatabaseUtil {
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
 
+            // THE BULLDOZER: Wipes the old database clean
+            statement.execute("DROP ALL OBJECTS");
+
             statement.execute(createActivitiesTable);
             statement.execute(createUserTable);
             statement.execute(createSessionTable);
