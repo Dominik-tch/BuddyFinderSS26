@@ -26,7 +26,9 @@ public class DatabaseUtil {
                 description VARCHAR(255),
                 latitude VARCHAR(255),
                 longitude VARCHAR(255),
-                weather VARCHAR(255)
+                weather VARCHAR(255),
+                activityDate TEXT,
+                activityTime TEXT
             );
         """;
         String createUserTable = """
