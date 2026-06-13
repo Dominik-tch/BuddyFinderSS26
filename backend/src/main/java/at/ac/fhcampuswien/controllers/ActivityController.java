@@ -470,9 +470,7 @@ public class ActivityController implements HttpHandler {
         }
     }
 
-    // ==========================================================
-    // EXTRA CREDIT: TRANSLATION API (MyMemory - Free, No Key needed)
-    // ==========================================================
+    // Translation API
     private void fetchAndSetTranslation(Activity activity) {
         String originalTitle = activity.getTitle();
         if (originalTitle == null || originalTitle.isBlank()) {
@@ -480,10 +478,8 @@ public class ActivityController implements HttpHandler {
         }
 
         try {
-            // Encode the title so spaces and special characters are safe for the URL
             String encodedTitle = java.net.URLEncoder.encode(originalTitle, java.nio.charset.StandardCharsets.UTF_8);
             
-            // Using "Autodetect|en" so it supports any language translating to English
             String translateUrl = "https://api.mymemory.translated.net/get?q=" + encodedTitle + "&langpair=Autodetect%7Cen";
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(5))
@@ -501,15 +497,18 @@ public class ActivityController implements HttpHandler {
             if (jsonResponse.has("responseData")) {
                 String translatedText = jsonResponse.getAsJsonObject("responseData").get("translatedText").getAsString();
                 
-                // Ensure it doesn't just append an empty string or the exact same text
-                if (translatedText != null && !translatedText.trim().isEmpty() && !translatedText.equalsIgnoreCase(originalTitle)) {
+                // Ensure it doesn't append empty string, exact same text, or the API error message
+                if (translatedText != null 
+                    && !translatedText.trim().isEmpty() 
+                    && !translatedText.equalsIgnoreCase(originalTitle)
+                    && !translatedText.contains("PLEASE SELECT TWO")) {
+                    
                     activity.setTitle(originalTitle + " (EN: " + translatedText + ")");
                     System.out.println("MILESTONE 9: Translation successfully fetched: " + translatedText);
                 }
             }
         } catch (Exception e) {
             System.out.println("Warning: Translation API failed - " + e.getMessage());
-            // Catching all exceptions so the server never crashes if the API is temporarily down
         }
     }
 
