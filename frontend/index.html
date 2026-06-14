@@ -85,7 +85,7 @@
             </div>
 
             <!-- Add Activity -->
-            <div class="add-activity card border-brand">
+            <div id="create-activity-box" class="add-activity card border-brand">
                 <h3>Create New Activity</h3>
                 <form id="add-activity-form" onsubmit="handleAddActivity(event)">
                     <div class="form-group">
@@ -174,12 +174,10 @@
             <!-- List of Activities -->
             <h3 id="list-title" class="section-title">Activities</h3>
 
-
-            <div class="card search-bar" style="margin-bottom: 1.5rem;">
+            <div id="search-section" class="card search-bar" style="margin-bottom: 1.5rem;">
                 <input type="text" id="search-title" placeholder="Search Title">
                 <input type="text" id="search-location" placeholder="Location">
                 <input type="number" id="search-price" placeholder="Max Price">
-
                 <button type="button" onclick="searchActivities()" class="btn btn-primary">Search</button>
             </div>
 
