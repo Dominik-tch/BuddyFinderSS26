@@ -332,8 +332,8 @@ h2, h3, h4 {
 .profile-popup {
     display: none; /* Hidden by default */
     position: absolute;
-    top: 100%; /* Sits directly below the participant's name */
-    left: 0;   /* Aligns with the left edge of the name */
+    bottom: 100%; /* Sits directly below the participant's name */
+    left: 0px;   /* Aligns with the left edge of the name */
     background-color: var(--white);
     color: var(--text-color);
     border: 1px solid var(--border-color);

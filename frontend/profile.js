@@ -1,11 +1,11 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Session Guard
-    if (!getToken()) {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await apiFetch('/users/session', { method: 'GET' }); 
+        loadProfile();
+    } catch (error) {
+
         window.location.href = 'index.html';
-        return;
     }
-    
-    loadProfile();
 });
 
 async function loadProfile() {

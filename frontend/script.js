@@ -8,18 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- UI LOGIC ---
-function checkAuthStatus() {
-    if (getToken()) {
+async function checkAuthStatus() {
+    try {
+        await apiFetch('/users/session', { method: 'GET' });
+
         document.getElementById('view-auth').classList.add('hidden');
         document.getElementById('view-dashboard').classList.remove('hidden');
         document.getElementById('btn-logout').classList.remove('hidden');
-        document.getElementById('btn-profile').classList.remove('hidden'); // Show profile button
+        document.getElementById('btn-profile').classList.remove('hidden');
         loadActivities('getAll');
-    } else {
+
+    } catch (error) {
         document.getElementById('view-auth').classList.remove('hidden');
         document.getElementById('view-dashboard').classList.add('hidden');
         document.getElementById('btn-logout').classList.add('hidden');
-        document.getElementById('btn-profile').classList.add('hidden'); // Hide profile button
+        document.getElementById('btn-profile').classList.add('hidden');
     }
 }
 
@@ -81,28 +84,29 @@ async function handleAuth(event) {
             body: JSON.stringify(payload)
         });
 
-        if (isLoginMode && data.sessionID) {
-            localStorage.setItem('sessionToken', data.sessionID);
-            showAlert('Successfully logged in!');
+        if (isLoginMode) {
+            showAlert('Succesfully logged in!');
             checkAuthStatus();
         } else if (!isLoginMode) {
             showAlert('Successfully registered! Please log in now.');
-            toggleAuthMode(true); // Force back to login mode after successful registration
-            // Clear form for a clean login
+            toggleAuthMode(true);
             document.getElementById('auth-form').reset();
         }
     } catch (error) {
         console.error("Auth Error", error);
+        if (error.status === 401) {
+            showAlert(error.message, true);
+        }
+
     }
 }
 
 async function logout(callApi = true) {
-    if (callApi && getToken()) {
+    if (callApi) {
         try {
             await apiFetch('/users/logout', { method: 'POST' });
         } catch (e) { console.error(e); }
     }
-    localStorage.removeItem('sessionToken');
     checkAuthStatus();
     showAlert('Successfully logged out.');
 }
@@ -202,59 +206,59 @@ function renderActivities(activities) {
         descP.textContent = act.description || 'No description';
 
         // Participants List
-const participantsP = document.createElement('div');
-participantsP.className = "participants-list";
-participantsP.textContent = "Participants: ";
+        const participantsP = document.createElement('div');
+        participantsP.className = "participants-list";
+        participantsP.textContent = "Participants: ";
 
-if (act.participants && act.participants.length > 0) {
-    act.participants.forEach((user, index) => {
-        const userSpan = document.createElement('div');
-        userSpan.className = "participant-link";
-        userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
-        userSpan.textContent = user.userName;
-        userSpan.onclick = () => openUser(user.id);
+        if (act.participants && act.participants.length > 0) {
+            act.participants.forEach((user, index) => {
+                const userSpan = document.createElement('div');
+                userSpan.className = "participant-link";
+                userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
+                userSpan.textContent = user.userName;
+                userSpan.onclick = () => openUser(user.id);
 
-        const popupDiv = document.createElement('div');
-        popupDiv.className = "profile-popup";
-        popupDiv.innerHTML = `
+                const popupDiv = document.createElement('div');
+                popupDiv.className = "profile-popup";
+                popupDiv.innerHTML = `
             <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
             <p><strong>Username:</strong> ${user.userName}</p>
             <p class="popup-loading" style="font-style: italic;">Loading profile...</p>
         `;
-        userSpan.appendChild(popupDiv);
+                userSpan.appendChild(popupDiv);
 
-        userSpan.onmouseenter = async () => {
-            if (popupDiv.dataset.loaded === "true") return;
-            
-            try {
-                const userData = await apiFetch(`/users/profile?id=${user.id}`);
-                
-                popupDiv.innerHTML = `
+                userSpan.onmouseenter = async () => {
+                    if (popupDiv.dataset.loaded === "true") return;
+
+                    try {
+                        const userData = await apiFetch(`/users/profile?id=${user.id}`);
+
+                        popupDiv.innerHTML = `
                     <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
                     <p><strong>Username:</strong> ${userData.userName || userData.username || user.userName}</p>
                     <p><strong>Name:</strong> ${userData.firstName || '-'} ${userData.lastName || '-'}</p>
                     <p><strong>Email:</strong> ${userData.email || '-'}</p>
                 `;
-                popupDiv.dataset.loaded = "true";
-            } catch (err) {
-                const loadingText = popupDiv.querySelector('.popup-loading');
-                if (loadingText) loadingText.textContent = "Details temporarily unavailable";
-            }
-        };
+                        popupDiv.dataset.loaded = "true";
+                    } catch (err) {
+                        const loadingText = popupDiv.querySelector('.popup-loading');
+                        if (loadingText) loadingText.textContent = "Details temporarily unavailable";
+                    }
+                };
 
-        participantsP.appendChild(userSpan);
+                participantsP.appendChild(userSpan);
 
-        // Add commas between names
-        if (index < act.participants.length - 1) {
-            participantsP.appendChild(document.createTextNode(", "));
+                // Add commas between names
+                if (index < act.participants.length - 1) {
+                    participantsP.appendChild(document.createTextNode(", "));
+                }
+            });
+        } else {
+            participantsP.appendChild(document.createTextNode("None"));
         }
-    });
-} else {
-    participantsP.appendChild(document.createTextNode("None"));
-}
 
-// Combine all content parts
-contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
+        // Combine all content parts
+        contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
 
         // Action Buttons
         const actionsDiv = document.createElement('div');
@@ -393,12 +397,20 @@ function openEditBox(act) {
     document.getElementById('edit-location').value = act.location;
     document.getElementById('edit-price').value = act.price;
     document.getElementById('edit-limit').value = act.userLimit;
+    document.getElementById('create-activity-box').classList.add('hidden');
+    document.getElementById('search-section').classList.add('hidden');
+    document.getElementById('activities-container').classList.add('hidden');
+    document.getElementById('list-title').classList.add('hidden');
 }
 
 function closeEditBox() {
     document
         .getElementById('edit-activity-box')
         .classList.add('hidden');
+    document.getElementById('create-activity-box').classList.remove('hidden');
+    document.getElementById('search-section').classList.remove('hidden');
+    document.getElementById('activities-container').classList.remove('hidden');
+    document.getElementById('list-title').classList.remove('hidden');
 }
 
 async function submitEditActivity(event) {

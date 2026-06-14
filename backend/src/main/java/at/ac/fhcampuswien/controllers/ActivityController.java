@@ -38,7 +38,8 @@ public class ActivityController implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "http://localhost:8000");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Credentials", "true");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -335,8 +336,7 @@ public class ActivityController implements HttpHandler {
 
     private void fetchAndSetWeather(Activity activity) {
         if (activity.getLatitude() == null || activity.getLongitude() == null) {
-            System.out.println("Warning: Cannot fetch weather without coordinates.");
-            return;
+            throw new IllegalArgumentException("Cannot fetch weather without coordinates");
         }
 
         try {
@@ -469,12 +469,22 @@ public class ActivityController implements HttpHandler {
     }
 
     private String getAuthenticatedUserId(HttpExchange exchange) {
-        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        java.util.List<String> cookies = exchange.getRequestHeaders().get("Cookie");
+        String token = null;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (cookies != null) {
+            for (String cookieHeader : cookies) {
+                String[] cookiePairs = cookieHeader.split("; ");
+                for (String cookie : cookiePairs) {
+                    if (cookie.startsWith("sessionToken=")) {
+                        token = cookie.substring("sessionToken=".length());
+                        break;
+                    }
+                }
+            }
+        }
+        if (token != null) {
             String userId = sessionService.validateTokenAndGetUserId(token);
-
             if (userId != null) {
                 return userId;
             }
