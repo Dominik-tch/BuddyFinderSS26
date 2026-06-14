@@ -178,7 +178,7 @@ function renderActivities(activities) {
         metaDiv.appendChild(detailsSpan);
 
         const dateTimeSpan = document.createElement('span');
-        dateTimeSpan.style.display = "block"; // Makes it sit on its own line if you prefer
+        dateTimeSpan.style.display = "block";
         dateTimeSpan.textContent = ` 🗓️ Date: ${act.activityDate || 'N/A'} | ⏰ Time: ${act.activityTime || 'N/A'}`;
         metaDiv.appendChild(dateTimeSpan);
 
@@ -202,69 +202,59 @@ function renderActivities(activities) {
         descP.textContent = act.description || 'No description';
 
         // Participants List
-        const participantsP = document.createElement('div');
-        participantsP.className = "participants-list";
-        participantsP.textContent = "Participants: ";
+const participantsP = document.createElement('div');
+participantsP.className = "participants-list";
+participantsP.textContent = "Participants: ";
 
-        if (act.participants && act.participants.length > 0) {
-            act.participants.forEach((user, index) => {
-                const userSpan = document.createElement('div');
-                userSpan.className = "participant-link";
-                userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
-                userSpan.textContent = user.userName;
-                userSpan.onclick = () => openUser(user.id);
+if (act.participants && act.participants.length > 0) {
+    act.participants.forEach((user, index) => {
+        const userSpan = document.createElement('div');
+        userSpan.className = "participant-link";
+        userSpan.style.display = "inline-block"; // Ensures names sit side-by-side like a span
+        userSpan.textContent = user.userName;
+        userSpan.onclick = () => openUser(user.id);
 
-                const popupDiv = document.createElement('div');
-                popupDiv.className = "profile-popup";
+        const popupDiv = document.createElement('div');
+        popupDiv.className = "profile-popup";
+        popupDiv.innerHTML = `
+            <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
+            <p><strong>Username:</strong> ${user.userName}</p>
+            <p class="popup-loading" style="font-style: italic;">Loading profile...</p>
+        `;
+        userSpan.appendChild(popupDiv);
+
+        userSpan.onmouseenter = async () => {
+            if (popupDiv.dataset.loaded === "true") return;
+            
+            try {
+                const userData = await apiFetch(`/users/profile?id=${user.id}`);
+                
                 popupDiv.innerHTML = `
-                            <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
-                            <p><strong>Username:</strong> ${user.userName}</p>
-                            <p class="popup-loading" style="font-style: italic;">Loading profile...</p>
-                        `;
-                userSpan.appendChild(popupDiv);
+                    <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
+                    <p><strong>Username:</strong> ${userData.userName || userData.username || user.userName}</p>
+                    <p><strong>Name:</strong> ${userData.firstName || '-'} ${userData.lastName || '-'}</p>
+                    <p><strong>Email:</strong> ${userData.email || '-'}</p>
+                `;
+                popupDiv.dataset.loaded = "true";
+            } catch (err) {
+                const loadingText = popupDiv.querySelector('.popup-loading');
+                if (loadingText) loadingText.textContent = "Details temporarily unavailable";
+            }
+        };
 
-                userSpan.onmouseenter = async () => {
-                    if (popupDiv.dataset.loaded === "true") return;
-                    try {
-                        // Automatically look for a standard auth token
-                        const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-                        const headers = {};
-                        if (token) {
-                            headers['Authorization'] = `Bearer ${token}`;
-                        }
-                        const response = await fetch(`${BASE_URL}/users/profile?id=${user.id}`, { headers });
+        participantsP.appendChild(userSpan);
 
-                        if (response.ok) {
-                            const userData = await response.json();
-                            popupDiv.innerHTML = `
-                                                <strong style="color: var(--brand-dark);">👤 Buddy Details</strong>
-                                                <p><strong>Username:</strong> ${userData.userName || userData.username || user.userName}</p>
-                                                <p><strong>Name:</strong> ${userData.firstName || '-'} ${userData.lastName || '-'}</p>
-                                                <p><strong>Email:</strong> ${userData.email || '-'}</p>
-                                            `;
-                            popupDiv.dataset.loaded = "true";
-                        } else {
-                            throw new Error();
-                        }
-                    } catch (err) {
-                        const loadingText = popupDiv.querySelector('.popup-loading');
-                        if (loadingText) loadingText.textContent = "Details temporarily unavailable";
-                    }
-                };
-
-                participantsP.appendChild(userSpan);
-
-                // Add commas between names
-                if (index < act.participants.length - 1) {
-                    participantsP.appendChild(document.createTextNode(", "));
-                }
-            });
-        } else {
-            participantsP.appendChild(document.createTextNode("None"));
+        // Add commas between names
+        if (index < act.participants.length - 1) {
+            participantsP.appendChild(document.createTextNode(", "));
         }
+    });
+} else {
+    participantsP.appendChild(document.createTextNode("None"));
+}
 
-        // Combine all content parts
-        contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
+// Combine all content parts
+contentDiv.append(headerDiv, metaDiv, weatherDiv, descP, participantsP);
 
         // Action Buttons
         const actionsDiv = document.createElement('div');
