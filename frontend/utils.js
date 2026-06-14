@@ -11,39 +11,30 @@ function showAlert(message, isError = false) {
     setTimeout(() => { alertBox.classList.add('hidden'); }, 4000);
 }
 
-function getToken() {
-    return localStorage.getItem('sessionToken');
-}
-
 async function apiFetch(endpoint, options = {}) {
-    const token = getToken();
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers
     };
 
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
+    const fetchOptions = {
+        ...options,
+        headers,
+        credentials: 'include' 
+    };
 
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
-            ...options,
-            headers
-        });
-
+        const response = await fetch(`${BASE_URL}${endpoint}`, fetchOptions);
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            if (response.status === 401) {
-                localStorage.removeItem('sessionToken');
-                window.location.href = 'index.html';
-            }
-            throw new Error(data.error || 'An error occurred');
+            throw { status: response.status, message: data.error || 'Ein Fehler ist aufgetreten' };
         }
         return data;
     } catch (error) {
-        showAlert(error.message, true);
+        if (error.status !== 401) {
+            showAlert(error.message || 'Ein Fehler ist aufgetreten', true);
+        }
         throw error;
     }
 }

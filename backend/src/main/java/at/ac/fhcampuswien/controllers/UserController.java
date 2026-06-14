@@ -28,7 +28,8 @@ public class UserController implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "http://localhost:8000");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Credentials", "true");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
@@ -46,6 +47,7 @@ public class UserController implements HttpHandler {
                 case BASE + "register" -> handleRegisterRequest(method, exchange);
                 case BASE + "login" -> handleLoginRequest(method, exchange);
                 case BASE + "logout" -> handleLogoutRequest(method, exchange);
+                case BASE + "session" -> handleSessionRequest(method, exchange);
                 case BASE + "profile" -> handleProfileRequest(method, exchange);
                 case BASE + "editProfile" -> handleEditProfileRequest(method, exchange);
                 case BASE + "deleteAccount" -> handleDeleteAccountRequest(method, exchange);
@@ -53,6 +55,8 @@ public class UserController implements HttpHandler {
             }
         } catch (IllegalArgumentException e) {
             ResponseFormatter.send(exchange, 400, Map.of("error", e.getMessage()));
+        } catch (SecurityException e) {
+            ResponseFormatter.send(exchange, 401, Map.of("error", e.getMessage()));
         } catch (JsonSyntaxException e) {
             ResponseFormatter.send(exchange, 400, Map.of("error", "Malformed JSON syntax in request body."));
         } catch (IllegalStateException e) {
@@ -99,9 +103,12 @@ public class UserController implements HttpHandler {
                     // login successful -> create session
                     Session newSession = sessionService.createSessionForUser(authenticatedUser.getId().toString());
 
+                    String cookieValue = "sessionToken=" + newSession.getSessionId() +
+                            "; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax";
+                    exchange.getResponseHeaders().add("Set-Cookie", cookieValue);
+
                     ResponseFormatter.send(exchange, 200, Map.of(
-                            "message", "Login successful",
-                            "sessionID", newSession.getSessionId()
+                            "message", "Login successful"
                     ));
                 } else {
                     // wrong password or username
@@ -115,19 +122,35 @@ public class UserController implements HttpHandler {
     private void handleLogoutRequest(String method, HttpExchange exchange) throws IOException, SQLException {
         switch (method) {
             case "POST" -> {
-                // Header "Authorization: Bearer <token>"
-                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+                try {
 
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    String token = authHeader.substring(7);
-
-                    // delete session from database
-                    sessionService.invalidateSession(token);
+                    String userId = getAuthenticatedUserId(exchange);
+                    String token = exchange.getRequestHeaders().get("Cookie").stream()
+                            .flatMap(c -> java.util.Arrays.stream(c.split("; ")))
+                            .filter(c -> c.startsWith("sessionToken="))
+                            .map(c -> c.substring("sessionToken=".length()))
+                            .findFirst()
+                            .orElse(null);
+                    if (token != null) {
+                        sessionService.invalidateSession(token);
+                    }
+                    String clearCookie = "sessionToken=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax";
+                    exchange.getResponseHeaders().add("Set-Cookie", clearCookie);
 
                     ResponseFormatter.send(exchange, 200, Map.of("message", "Logged out successfully"));
-                } else {
-                    ResponseFormatter.send(exchange, 400, Map.of("error", "Missing or invalid Authorization header"));
+                } catch (SecurityException e) {
+                    ResponseFormatter.send(exchange, 401, Map.of("error", "Not logged in"));
                 }
+            }
+            default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
+        }
+    }
+
+    private void handleSessionRequest(String method, HttpExchange exchange) throws IOException {
+        switch (method) {
+            case "GET" -> {
+                getAuthenticatedUserId(exchange);
+                ResponseFormatter.send(exchange, 200, Map.of("message", "Authenticated"));
             }
             default -> ResponseFormatter.send(exchange, 405, Map.of("error", "Method not allowed"));
         }
@@ -249,12 +272,22 @@ public class UserController implements HttpHandler {
     }
 
     private String getAuthenticatedUserId(HttpExchange exchange) {
-        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        java.util.List<String> cookies = exchange.getRequestHeaders().get("Cookie");
+        String token = null;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (cookies != null) {
+            for (String cookieHeader : cookies) {
+                String[] cookiePairs = cookieHeader.split("; ");
+                for (String cookie : cookiePairs) {
+                    if (cookie.startsWith("sessionToken=")) {
+                        token = cookie.substring("sessionToken=".length());
+                        break;
+                    }
+                }
+            }
+        }
+        if (token != null) {
             String userId = sessionService.validateTokenAndGetUserId(token);
-
             if (userId != null) {
                 return userId;
             }

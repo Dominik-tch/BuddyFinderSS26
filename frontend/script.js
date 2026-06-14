@@ -8,18 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // --- UI LOGIC ---
-function checkAuthStatus() {
-    if (getToken()) {
+async function checkAuthStatus() {
+    try {
+        await apiFetch('/users/session', { method: 'GET' });
+        
         document.getElementById('view-auth').classList.add('hidden');
         document.getElementById('view-dashboard').classList.remove('hidden');
         document.getElementById('btn-logout').classList.remove('hidden');
-        document.getElementById('btn-profile').classList.remove('hidden'); // Show profile button
+        document.getElementById('btn-profile').classList.remove('hidden');
         loadActivities('getAll');
-    } else {
+
+    } catch (error) {
         document.getElementById('view-auth').classList.remove('hidden');
         document.getElementById('view-dashboard').classList.add('hidden');
         document.getElementById('btn-logout').classList.add('hidden');
-        document.getElementById('btn-profile').classList.add('hidden'); // Hide profile button
+        document.getElementById('btn-profile').classList.add('hidden');
     }
 }
 
@@ -81,28 +84,29 @@ async function handleAuth(event) {
             body: JSON.stringify(payload)
         });
 
-        if (isLoginMode && data.sessionID) {
-            localStorage.setItem('sessionToken', data.sessionID);
-            showAlert('Successfully logged in!');
+        if (isLoginMode) {
+            showAlert('Succesfully logged in!');
             checkAuthStatus();
         } else if (!isLoginMode) {
             showAlert('Successfully registered! Please log in now.');
-            toggleAuthMode(true); // Force back to login mode after successful registration
-            // Clear form for a clean login
+            toggleAuthMode(true);
             document.getElementById('auth-form').reset();
         }
     } catch (error) {
         console.error("Auth Error", error);
+        if (error.status === 401) {
+            showAlert(error.message, true);
+        }
+
     }
 }
 
 async function logout(callApi = true) {
-    if (callApi && getToken()) {
+    if (callApi) {
         try {
             await apiFetch('/users/logout', { method: 'POST' });
         } catch (e) { console.error(e); }
     }
-    localStorage.removeItem('sessionToken');
     checkAuthStatus();
     showAlert('Successfully logged out.');
 }
